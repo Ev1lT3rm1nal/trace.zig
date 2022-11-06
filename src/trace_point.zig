@@ -21,7 +21,11 @@ pub fn TracePoint(comptime id_length: comptime_int) type {
                 ts >>= 8;
             }
             bytes[index] = @intCast(u8, ts & 0xFF);
-            bytes[16] = @enumToInt(self.trace_type);
+            
+            index += 1;
+            bytes[index] = @enumToInt(self.trace_type);
+
+            // TODO: add Id
             return bytes;
         }
     };
