@@ -4,33 +4,27 @@ pub const TraceType = enum(u2) {
     event = 2,
 };
 
-pub fn Id(length:comptime_int, value:[length]u8) type {
-    _ = value;
-
-}
-
 pub fn TracePoint(comptime id_length: comptime_int) type {
+    return struct {
+        id: *const [id_length:0]u8,
+        timestamp: i128,
+        trace_type: TraceType,
+        const Self = @This();
 
-  return struct {
-    id: *const [id_length:0] u8,
-    timestamp: i128,
-    trace_type: TraceType,
-    const Self = @This();
-
-    pub fn toBytes(self: *Self) [id_length + 16 + 1] u8 {
-        const length = id_length + 16 + 1;
-        var bytes: [length] u8 = undefined;
-        var ts = self.timestamp;
-        var index: usize = 15;
-        while (index > 0) : (index -= 1) {
-            bytes[index] = @intCast(u8,ts & 0xFF);
-            ts >>= 8;
+        pub fn toBytes(self: *Self) [id_length + 16 + 1]u8 {
+            const length = id_length + 16 + 1;
+            var bytes: [length]u8 = undefined;
+            var ts = self.timestamp;
+            var index: usize = 15;
+            while (index > 0) : (index -= 1) {
+                bytes[index] = @intCast(u8, ts & 0xFF);
+                ts >>= 8;
+            }
+            bytes[index] = @intCast(u8, ts & 0xFF);
+            bytes[16] = @enumToInt(self.trace_type);
+            return bytes;
         }
-        bytes[index] = @intCast(u8,ts & 0xFF);
-        bytes[16] = @enumToInt(self.trace_type);
-        return bytes;
-    }
-};
+    };
 }
 
 test "TracePoint.toBytes" {
@@ -38,7 +32,7 @@ test "TracePoint.toBytes" {
     const testing = std.testing;
 
     // Arrange
-    var trace_point = TracePoint(16) {
+    var trace_point = TracePoint(16){
         .trace_type = TraceType.event,
         .timestamp = 0x00_01_02_03_04_05_06_07_08_09_0A_0B_0C_0D_0E_0F,
         .id = "Trace point test",
@@ -50,9 +44,9 @@ test "TracePoint.toBytes" {
     // Assert
     try testing.expect(33 == bytes.len);
 
-    var index:u8 = 0;
+    var index: u8 = 0;
 
-    std.debug.print("{any}",.{bytes});
+    std.debug.print("{any}", .{bytes});
 
     while (index < 16) : (index += 1) {
         try testing.expectEqual(index, bytes[index]);
@@ -68,5 +62,4 @@ test "TracePoint.toBytes" {
         try testing.expectEqual(c, bytes[index]);
         index += 1;
     }
-
 }
