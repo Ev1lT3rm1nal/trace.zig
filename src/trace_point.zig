@@ -20,12 +20,16 @@ pub fn TracePoint(comptime id_length: comptime_int) type {
                 bytes[index] = @intCast(u8, ts & 0xFF);
                 ts >>= 8;
             }
-            bytes[index] = @intCast(u8, ts & 0xFF);
+            bytes[0] = @intCast(u8, ts & 0xFF);
             
-            index += 1;
+            index = 16;
             bytes[index] = @enumToInt(self.trace_type);
+            index += 1;
 
-            // TODO: add Id
+            for (self.id) |byte| {
+              bytes[index] = byte;
+              index += 1;
+            }
             return bytes;
         }
     };
@@ -50,13 +54,11 @@ test "TracePoint.toBytes" {
 
     var index: u8 = 0;
 
-    std.debug.print("{any}", .{bytes});
-
     while (index < 16) : (index += 1) {
         try testing.expectEqual(index, bytes[index]);
     }
 
-    try testing.expect(2 == bytes[index]);
+    try testing.expect(2 == bytes[16]);
 
     index += 1;
 
