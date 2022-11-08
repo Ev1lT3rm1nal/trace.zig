@@ -1,11 +1,16 @@
 # Todos
 
 * GitLab repo
+* Readme
+* License
+* Documentation
+* Tests
 * Generate documentation using GitLab CI/CD
 * Create writer.zig
   * interface
   * empty writer
   * default writer
+  * TestWriter?
 * Implement format for TracePoint(Struct)
 * Create clock.zig
   * similar to writer.zig
@@ -16,3 +21,5 @@
   * [zig.news]
   * Reddit
   * [zig - GitHub Issue - 5987](https://github.com/ziglang/zig/issues/5987)
+* Benchmarks / identify the overhead
+* Examples in example folder (i.e. exe using the library)
