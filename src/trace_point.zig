@@ -2,6 +2,13 @@ pub const TraceType = enum(u2) {
     span_open = 0,
     span_close = 1,
     event = 2,
+    error_event = 3,
+};
+
+pub const TracePointStruct = struct {
+  id: [] const u8,
+  timestamp: i128,
+  trace_type: TraceType,
 };
 
 pub fn TracePoint(comptime id_length: comptime_int) type {
