@@ -9,8 +9,8 @@
 * Create clock.zig
   * similar to writer.zig
 * Implement format for TracePoint(Struct)?
+* [Code coverage](https://zig.news/squeek502/code-coverage-for-zig-1dk1)
 * Readme
-* License
 * Documentation
 * Tests
 * Generate documentation using GitLab CI/CD
