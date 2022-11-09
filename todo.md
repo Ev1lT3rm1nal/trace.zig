@@ -1,19 +1,19 @@
 # Todos
 
 * GitLab repo
-* Readme
-* License
-* Documentation
-* Tests
-* Generate documentation using GitLab CI/CD
 * Create writer.zig
   * interface
   * empty writer
   * default writer
   * TestWriter?
-* Implement format for TracePoint(Struct)
 * Create clock.zig
   * similar to writer.zig
+* Implement format for TracePoint(Struct)?
+* Readme
+* License
+* Documentation
+* Tests
+* Generate documentation using GitLab CI/CD
 * Publish / get the information out:
   * [ziglearn - Chapter 3 - packages](https://ziglearn.org/chapter-3/#packages)
   * Package manager (see ziglearn string above)

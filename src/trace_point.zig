@@ -6,9 +6,9 @@ pub const TraceType = enum(u2) {
 };
 
 pub const TracePointStruct = struct {
-  id: [] const u8,
-  timestamp: i128,
-  trace_type: TraceType,
+    id: []const u8,
+    timestamp: i128,
+    trace_type: TraceType,
 };
 
 pub fn TracePoint(comptime id_length: comptime_int) type {
@@ -28,14 +28,14 @@ pub fn TracePoint(comptime id_length: comptime_int) type {
                 ts >>= 8;
             }
             bytes[0] = @intCast(u8, ts & 0xFF);
-            
+
             index = 16;
             bytes[index] = @enumToInt(self.trace_type);
             index += 1;
 
             for (self.id) |byte| {
-              bytes[index] = byte;
-              index += 1;
+                bytes[index] = byte;
+                index += 1;
             }
             return bytes;
         }
