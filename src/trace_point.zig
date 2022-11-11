@@ -1,3 +1,5 @@
+const std = @import("std");
+
 pub const TraceType = enum(u2) {
     span_open = 0,
     span_close = 1,
@@ -7,8 +9,14 @@ pub const TraceType = enum(u2) {
 
 pub const TracePointStruct = struct {
     id: []const u8,
-    timestamp: i128,
+    timestamp: u64,
     trace_type: TraceType,
+    pub fn format(self: TracePointStruct, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+        try writer.print("{x:0>16};{};{s}", .{ self.timestamp, @enumToInt(self.trace_type), self.id });
+        try writer.writeAll("");
+    }
 };
 
 pub fn TracePoint(comptime id_length: comptime_int) type {
@@ -43,7 +51,6 @@ pub fn TracePoint(comptime id_length: comptime_int) type {
 }
 
 test "TracePoint.toBytes" {
-    const std = @import("std");
     const testing = std.testing;
 
     // Arrange
@@ -75,4 +82,28 @@ test "TracePoint.toBytes" {
         try testing.expectEqual(c, bytes[index]);
         index += 1;
     }
+}
+
+test "TracePoint.format" {
+  const testing = std.testing;
+  const expect = std.testing.expect;
+  const eql = std.mem.eql;
+  const test_allocator = testing.allocator;
+  const trace_point = TracePointStruct {
+    .id = "Test Id",
+    .trace_type = TraceType.span_close,
+    .timestamp = 123,
+  };
+  const trace_point_string = try std.fmt.allocPrint(
+    test_allocator,
+    "{}",
+    .{trace_point}
+  );
+  defer test_allocator.free(trace_point_string);
+  try expect(eql(
+    u8,
+    trace_point_string,
+    "000000000000007b;1;Test Id",
+  ));
+  
 }
