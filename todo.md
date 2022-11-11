@@ -1,18 +1,11 @@
 # Todos
 
-* GitLab repo
-* Create writer.zig
-  * interface
-  * empty writer
-  * default writer
-  * TestWriter?
 * Create clock.zig
   * similar to writer.zig
-* Implement format for TracePoint(Struct)?
-* [Code coverage](https://zig.news/squeek502/code-coverage-for-zig-1dk1)
 * Readme
 * Documentation
 * Tests
+* [Code coverage](https://zig.news/squeek502/code-coverage-for-zig-1dk1)
 * Generate documentation using GitLab CI/CD
 * Publish / get the information out:
   * [ziglearn - Chapter 3 - packages](https://ziglearn.org/chapter-3/#packages)
