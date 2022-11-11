@@ -4,6 +4,7 @@ const builtin = @import("builtin");
 const tracepoint = @import("trace_point.zig");
 const TracePoint = tracepoint.TracePoint;
 const TraceType = tracepoint.TraceType;
+const writer = @import("writer.zig");
 
 const enable = if (@hasDecl(root, "enable_trace")) root.enable_trace else if (builtin.is_test)
     true
@@ -19,7 +20,7 @@ pub inline fn open(comptime id: []const u8) Span {
             .timestamp = 16,
             .trace_type = TraceType.span_open,
         };
-        std.debug.print("{}", .{trace_point});
+        writer.write(trace_point);
         return Span{ .id = id };
     }
 }
@@ -32,28 +33,12 @@ const SpanInner = struct {
             .timestamp = 0x00_11_22_33_44_55_66_77_88,
             .trace_type = TraceType.span_close,
         };
-        std.debug.print("{}", .{trace_point});
+        writer.write(trace_point);
     }
 };
 
 const Span = if (enable) SpanInner else struct {
-    pub fn close(self: @This()) void {
+    pub inline fn close(self: @This()) void {
         _ = self;
-        //std.debug.print("Enable = {}", .{ enable });
     }
 };
-
-test "Open and close span" {
-    std.debug.print("\n", .{});
-    const span = open("TestId");
-    //const span2 = Span{ .id = "My id" };
-    //_ = span2;
-    //defer span2.close();
-    //defer span.close();
-    std.debug.print("\nSpan opened, closing is deferred\n", .{});
-    span.close();
-}
-
-test "All non public types" {
-    @import("std").testing.refAllDecls(@This());
-}
