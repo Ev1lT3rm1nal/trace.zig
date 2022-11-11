@@ -2,7 +2,7 @@ const std = @import("std");
 const root = @import("root");
 const builtin = @import("builtin");
 const tracepoint = @import("trace_point.zig");
-const TracePoint = tracepoint.TracePointStruct;
+const TracePoint = tracepoint.TracePoint;
 const TraceType = tracepoint.TraceType;
 
 const enable = if (@hasDecl(root, "enable_trace")) root.enable_trace else if (builtin.is_test)
