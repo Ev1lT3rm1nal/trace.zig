@@ -1,7 +1,8 @@
 # Todos
 
-* Create clock.zig
-  * similar to writer.zig
+* Default example in examples folder
+* Instrument
+* Test all functions, even if nothing can be asserted.
 * Readme
 * Documentation
 * Tests
@@ -16,3 +17,5 @@
   * [zig - GitHub Issue - 5987](https://github.com/ziglang/zig/issues/5987)
 * Benchmarks / identify the overhead
 * Examples in example folder (i.e. exe using the library)
+* Add issues
+  * Find better solution when timestamp is negative on posix systems
