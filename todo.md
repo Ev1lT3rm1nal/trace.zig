@@ -1,10 +1,11 @@
 # Todos
 
-* Default example in examples folder
 * Instrument
 * Test all functions, even if nothing can be asserted.
 * Readme
 * Documentation
+  * Add disabled example
+  * Add examples documentation
 * Tests
 * [Code coverage](https://zig.news/squeek502/code-coverage-for-zig-1dk1)
 * Generate documentation using GitLab CI/CD
@@ -19,3 +20,4 @@
 * Examples in example folder (i.e. exe using the library)
 * Add issues
   * Find better solution when timestamp is negative on posix systems
+  * Enable setting the log level for default writer

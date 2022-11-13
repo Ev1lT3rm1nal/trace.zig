@@ -14,7 +14,13 @@ else
 
 pub inline fn open(comptime id: []const u8) Span {
     if (!enable) {
-        return .{};
+        const has_enable_trace = @hasDecl(root, "enable_trace");
+        if (has_enable_trace) {
+          @panic("enable should be true");
+        } else {
+          @panic("Cannot find enable_trace at root.");
+        }
+        //return .{};
     } else {
         const trace_point = TracePoint{
             .id = id,
@@ -41,7 +47,7 @@ const SpanInner = struct {
 const Span = if (enable) SpanInner else struct {
     pub inline fn close(self: @This()) void {
         _ = self;
-        if (std.builtin.is_test) {
+        if (builtin.is_test) {
           try std.testing.expect(false);
         }
     }

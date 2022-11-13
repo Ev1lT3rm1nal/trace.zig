@@ -5,6 +5,18 @@ pub const TraceType = enum(u2) {
     span_close = 1,
     event = 2,
     error_event = 3,
+    pub fn format(self: TraceType, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+        const name = switch(self) {
+          .span_open => "Span open",
+          .span_close => "Span close",
+          .event => "Event",
+          .error_event => "Error event",
+        };
+        try writer.print("{s}", .{ name });
+        try writer.writeAll("");
+    }
 };
 
 pub const TracePoint = struct {
@@ -14,7 +26,7 @@ pub const TracePoint = struct {
     pub fn format(self: TracePoint, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        try writer.print("{x:0>16};{};{s}", .{ self.timestamp, @enumToInt(self.trace_type), self.id });
+        try writer.print("tp;{d};{};{s}", .{ self.timestamp, @enumToInt(self.trace_type), self.id });
         try writer.writeAll("");
     }
 };

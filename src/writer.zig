@@ -11,5 +11,5 @@ pub inline fn write(trace_point: TracePoint) void {
 }
 
 inline fn writeDefault(trace_point: TracePoint) void {
-    std.log.debug("{}", .{trace_point});
+    std.log.info(";{}", .{trace_point});
 }
