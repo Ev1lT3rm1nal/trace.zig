@@ -1,5 +1,6 @@
 # Todos
 
+* Download, configure (zls) and use 0.10.0 release
 * Instrument
 * Test all functions, even if nothing can be asserted.
 * Readme
