@@ -46,6 +46,6 @@ test "TracePoint.format" {
     try expect(eql(
         u8,
         trace_point_string,
-        "000000000000007b;1;Test Id",
+        "tp;123;1;Test Id",
     ));
 }

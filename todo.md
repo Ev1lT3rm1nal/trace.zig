@@ -1,18 +1,18 @@
 # Todos
 
-* Download, configure (zls) and use 0.10.0 release
 * Instrument
 * Test all functions, even if nothing can be asserted.
 * Readme
 * Documentation
   * Add disabled example
+  * Add overriding example
   * Add examples documentation
 * Tests
 * [Code coverage](https://zig.news/squeek502/code-coverage-for-zig-1dk1)
 * Generate documentation using GitLab CI/CD
 * Publish / get the information out:
   * [ziglearn - Chapter 3 - packages](https://ziglearn.org/chapter-3/#packages)
-  * Package manager (see ziglearn string above)
+  * Package manager (see ziglearn link above)
   * Awesome zig
   * [zig.news]
   * Reddit
@@ -22,3 +22,5 @@
 * Add issues
   * Find better solution when timestamp is negative on posix systems
   * Enable setting the log level for default writer
+  * Thread safety for default logging
+  * Freestanding example
