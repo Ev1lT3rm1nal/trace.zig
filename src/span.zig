@@ -16,9 +16,9 @@ pub inline fn open(comptime id: []const u8) Span {
     if (!enable) {
         const has_enable_trace = @hasDecl(root, "enable_trace");
         if (has_enable_trace) {
-          @panic("enable should be true");
+            @panic("enable should be true");
         } else {
-          @panic("Cannot find enable_trace at root.");
+            @panic("Cannot find enable_trace at root.");
         }
         //return .{};
     } else {
@@ -48,12 +48,12 @@ const Span = if (enable) SpanInner else struct {
     pub inline fn close(self: @This()) void {
         _ = self;
         if (builtin.is_test) {
-          try std.testing.expect(false);
+            try std.testing.expect(false);
         }
     }
 };
 
 test "Span open and close" {
-  const span = open("Span Test Id 1");
-  defer span.close();
+    const span = open("Span Test Id 1");
+    defer span.close();
 }

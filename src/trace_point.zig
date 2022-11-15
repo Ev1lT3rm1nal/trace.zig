@@ -8,13 +8,13 @@ pub const TraceType = enum(u2) {
     pub fn format(self: TraceType, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        const name = switch(self) {
-          .span_open => "Span open",
-          .span_close => "Span close",
-          .event => "Event",
-          .error_event => "Error event",
+        const name = switch (self) {
+            .span_open => "Span open",
+            .span_close => "Span close",
+            .event => "Event",
+            .error_event => "Error event",
         };
-        try writer.print("{s}", .{ name });
+        try writer.print("{s}", .{name});
         try writer.writeAll("");
     }
 };
