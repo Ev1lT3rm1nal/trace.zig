@@ -81,3 +81,40 @@ test "Test instrument for comptime T function with 1 comptime Argument" {
     const value = instumentedOneComptimeArgU8SliceFunction(u8);
     try expect(std.mem.eql(u8, value, "u8"));
 }
+
+fn comptimeAnytypeOneArgumentVoidFunction(comptime f: anytype) void {
+    const std = @import("std");
+    const type_info = @typeInfo(@TypeOf(f));
+    const arg = type_info.Fn.args[0];
+    std.debug.print("Param of comptime anytype: {}", .{arg});
+}
+
+fn anotherFunction(comptime x: anytype) void {
+    const std = @import("std");
+    const type_name = @typeName(@TypeOf(x));
+    std.debug.print("Type name: {}", .{type_name});
+}
+
+fn genericAdd(x: anytype) @TypeOf(x) {
+    return x + 1;
+}
+
+test "Test void function with one argument void function" {
+    //const instrumented = instrument(comptimeAnytypeOneArgumentVoidFunction,"comptimeAnytypeOneArgumentVoidFunction");
+    //instrumented(anotherFunction);
+    comptimeAnytypeOneArgumentVoidFunction(anotherFunction);
+    const f = comptimeAnytypeOneArgumentVoidFunction;
+    const std = @import("std");
+    const type_info = @typeInfo(@TypeOf(f));
+    const arg = type_info.Fn.args[0];
+    std.debug.print("\nParam of comptime anytype: {}\n", .{arg});
+    const type_info_2 = @typeInfo(@TypeOf(anotherFunction));
+    const arg_2 = type_info_2.Fn.args[0];
+    std.debug.print("\nParam of another function: {}\n", .{arg_2});
+    const type_info_3 = @typeInfo(@TypeOf(oneComptimeArgU8SliceFunction));
+    const arg_3 = type_info_3.Fn.args[0];
+    std.debug.print("\nParam of another oneComptimeArgU8SliceFunction: {}\n", .{arg_3});
+    const type_info_4 = @typeInfo(@TypeOf(genericAdd));
+    const arg_4 = type_info_4.Fn.args[0];
+    std.debug.print("\nParam of generic add: {}\n", .{arg_4});
+}
