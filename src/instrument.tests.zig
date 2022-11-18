@@ -129,6 +129,80 @@ test "Test 2 arguments first \"type\" last anytype argument pattern" {
     try expect(5 == instrumented(u16, 5));
 }
 
+// ============ Tests for 3 arguments ============================
+
+fn vanilla3Args(x: u8, y: u8, z: u8) u8 {
+    return x + y + z;
+}
+
+test "Test 3 arguments vanilla pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumented = instrument(vanilla3Args, "vanilla3Args");
+    try expect(18 == instrumented(5, 6, 7));
+}
+
+fn firstArgType3Args(comptime T: type, x: u8, y: T) u8 {
+    return @as(T, x * y);
+}
+
+test "Test 3 arguments type first argument pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumented = instrument(firstArgType3Args, "firstArgType3Args");
+    try expect(30 == instrumented(u8, 5, 6));
+}
+
+fn lastArgAnytype3Args(x: u8, y: u8, z: anytype) u8 {
+    var ret = x;
+    var t: u8 = 1;
+    while (t <= y) : (t += z) {
+        ret *= x;
+    }
+    return ret + z;
+}
+
+test "Test 3 arguments anytype last argument pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumented = instrument(lastArgAnytype3Args, "lastArgAnytype3Args");
+    try expect(65 == instrumented(2, 5, 1));
+}
+
+fn firstTypeLastAnytype3Args(comptime T: type, x: u8, y: anytype) u8 {
+    return @as(T, x + y);
+}
+
+test "Test 3 arguments first \"type\" last anytype argument pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumented = instrument(firstTypeLastAnytype3Args, "firstTypeLastAnytype2Args");
+    try expect(125 == instrumented(u8, 5, 120));
+}
+
+// ========================================================================================
+// Test struct methods
+// ========================================================================================
+
+const Point = struct {
+    x: u32,
+    y: u32,
+    const Self = Point;
+    fn innerDotProduct(self: Point, other: Point) u32 {
+        return self.x * other.x + self.y * other.y;
+    }
+    const dotProduct = instrument(innerDotProduct, "Point.dotProduct");
+};
+
+test "Struct method" {
+    const point_1 = Point{
+        .x = 5,
+        .y = 6,
+    };
+    const point_2 = Point{
+        .x = 6,
+        .y = 5,
+    };
+    const dot = point_1.dotProduct(point_2);
+    try @import("std").testing.expect(60 == dot);
+}
+
 // ========================================================================================
 // Unsupported functions
 // ========================================================================================
