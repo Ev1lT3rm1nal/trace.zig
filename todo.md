@@ -1,6 +1,7 @@
 # Todos
 
 * Instrument
+  * Some tests with struct methods
 * Test all functions, even if nothing can be asserted.
 * Readme
 * Documentation
@@ -24,3 +25,11 @@
   * Enable setting the log level for default writer
   * Thread safety for default logging
   * Freestanding example
+  * More function argument patterns
+  * More anytype arguments than just last argument
+  * More than one type argument
+  * Comptime arguments other than type (e.g. debug.print)
+    * E.g. another instrument function?
+  * Reorganize instrument into own folder and split into several files
+  * Find a way to simplify instrument: can the function name be extracted somehow
+  * Restructure instrument tests: More focus overall

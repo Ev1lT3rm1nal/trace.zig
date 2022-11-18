@@ -82,6 +82,58 @@ test "Test instrument for comptime T function with 1 comptime Argument" {
     try expect(std.mem.eql(u8, value, "u8"));
 }
 
+// ============ Tests for 2 arguments ============================
+
+fn vanilla2Args(x: u8, y: u8) u8 {
+    return x + y;
+}
+
+test "Test 2 arguments vanilla pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumentedVanilla2Args = instrument(vanilla2Args, "vanilla2Args");
+    try expect(11 == instrumentedVanilla2Args(5, 6));
+}
+
+fn firstArgType2Args(comptime T: type, x: T) u8 {
+    return @as(u8, x * x);
+}
+
+test "Test 2 arguments type first argument pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumented = instrument(firstArgType2Args, "firstArgType2Args");
+    try expect(25 == instrumented(u8, 5));
+}
+
+fn lastArgAnytype2Args(x: u8, y: anytype) u8 {
+    var z: u8 = 0;
+    var ret = x;
+    while (z <= y) : (z += 1) {
+        ret *= x;
+    }
+    return ret;
+}
+
+test "Test 2 arguments anytype last argument pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumented = instrument(lastArgAnytype2Args, "lastArgAnytype2Args");
+    try expect(128 == instrumented(2, 5));
+}
+
+fn firstTypeLastAnytype2Args(comptime T: type, y: anytype) u8 {
+    return @as(T, y);
+}
+
+test "Test 2 arguments first \"type\" last anytype argument pattern" {
+    const expect = @import("std").testing.expect;
+    const instrumented = instrument(firstTypeLastAnytype2Args, "firstTypeLastAnytype2Args");
+    try expect(5 == instrumented(u16, 5));
+}
+
+// ========================================================================================
+// Unsupported functions
+// ========================================================================================
+
+// Currently not supported since it is not clear how to identify if an argument is comptime
 fn comptimeAnytypeOneArgumentVoidFunction(comptime f: anytype) void {
     const std = @import("std");
     const type_info = @typeInfo(@TypeOf(f));
@@ -89,6 +141,7 @@ fn comptimeAnytypeOneArgumentVoidFunction(comptime f: anytype) void {
     std.debug.print("Param of comptime anytype: {}", .{arg});
 }
 
+// Currently not supported since it is not clear how to identify if an argument is comptime
 fn anotherFunction(comptime x: anytype) void {
     const std = @import("std");
     const type_name = @typeName(@TypeOf(x));
@@ -99,22 +152,7 @@ fn genericAdd(x: anytype) @TypeOf(x) {
     return x + 1;
 }
 
-test "Test void function with one argument void function" {
-    //const instrumented = instrument(comptimeAnytypeOneArgumentVoidFunction,"comptimeAnytypeOneArgumentVoidFunction");
-    //instrumented(anotherFunction);
-    comptimeAnytypeOneArgumentVoidFunction(anotherFunction);
-    const f = comptimeAnytypeOneArgumentVoidFunction;
-    const std = @import("std");
-    const type_info = @typeInfo(@TypeOf(f));
-    const arg = type_info.Fn.args[0];
-    std.debug.print("\nParam of comptime anytype: {}\n", .{arg});
-    const type_info_2 = @typeInfo(@TypeOf(anotherFunction));
-    const arg_2 = type_info_2.Fn.args[0];
-    std.debug.print("\nParam of another function: {}\n", .{arg_2});
-    const type_info_3 = @typeInfo(@TypeOf(oneComptimeArgU8SliceFunction));
-    const arg_3 = type_info_3.Fn.args[0];
-    std.debug.print("\nParam of another oneComptimeArgU8SliceFunction: {}\n", .{arg_3});
-    const type_info_4 = @typeInfo(@TypeOf(genericAdd));
-    const arg_4 = type_info_4.Fn.args[0];
-    std.debug.print("\nParam of generic add: {}\n", .{arg_4});
+// Currently not supported since return_type is null
+fn pow2(comptime T: type, x: T) @TypeOf(x) {
+    return x * x;
 }

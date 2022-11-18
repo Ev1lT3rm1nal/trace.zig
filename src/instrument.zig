@@ -7,35 +7,11 @@ pub inline fn instrument(comptime f: anytype, id: []const u8) @TypeOf(f) {
     const wrapped_function = switch (function_arguments.number_of_arguments) {
         0 => instrument0Args(f, function_arguments, id),
         1 => instrument1Arg(f, function_arguments, id),
-        else => @compileError("Only up to 1 function argument is supported"),
+        2 => instrument2Arg(f, function_arguments, id),
+        else => @compileError("Only up to 2 function argument is supported"),
     };
 
     return wrapped_function;
-
-    //const function_type = @typeInfo(@TypeOf(f)).Fn;
-    //const return_type = function_type.return_type;
-    //if (return_type == null) {
-    //    @compileError("Null return type is not supported");
-    //}
-    //const args = function_type.args;
-    //const wrappedFunction = switch (args.len) {
-    //    0 => instrument0Args(f, id, function_type),
-    //    1 => instrument1Arg(f, id, function_type, args),
-    //    else => @compileError("Only up to 1 argument allowed. Use anytype or combined arguments in structs"),
-    //};
-    //return wrappedFunction;
-}
-
-inline fn instrument0Args(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
-    const calling_convention = function_arguments.calling_convention;
-    const Wrapper = struct {
-        fn wrapped() callconv(calling_convention) function_arguments.return_type {
-            const span = Span.open(id);
-            defer span.close();
-            return f();
-        }
-    };
-    return Wrapper.wrapped;
 }
 
 /// Specifies the function argument patterns that are supported by instrument.
@@ -64,7 +40,7 @@ fn validateFunction(comptime f: anytype) FunctionArguments {
     const number_of_arguments = args.len;
     const calling_convention = function_type_info.calling_convention;
     const return_type = function_type_info.return_type orelse {
-        @compileError("Return type of null is not supported.");
+        @compileError("Null return type is not supported");
     };
 
     if (number_of_arguments >= 3) {
@@ -134,6 +110,18 @@ fn analyseForFunctionArgumentsPattern(comptime arguments: []const std.builtin.Ty
     return pattern;
 }
 
+inline fn instrument0Args(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
+    const calling_convention = function_arguments.calling_convention;
+    const Wrapper = struct {
+        fn wrapped() callconv(calling_convention) function_arguments.return_type {
+            const span = Span.open(id);
+            defer span.close();
+            return f();
+        }
+    };
+    return Wrapper.wrapped;
+}
+
 inline fn instrument1Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
     const calling_convention = function_arguments.calling_convention;
     const arg = function_arguments.arguments[0];
@@ -171,37 +159,56 @@ inline fn instrument1Arg(comptime f: anytype, comptime function_arguments: Funct
         },
         else => @compileError("It is not supported that the first argument is of type \"type\" and of type \"anytype\"."),
     }
+}
 
-    //if (arg.is_generic) {
-    //    const Wrapper = struct {
-    //        fn wrapped(p1: anytype) callconv(calling_convention) function_type.return_type.? {
-    //            const span = Span.open(id);
-    //            defer span.close();
-    //            return f(p1);
-    //        }
-    //    };
-    //    return Wrapper.wrapped;
-    //} else {
-    //    const arg_type = arg.arg_type.?;
-    //    const arg_type_info = @typeInfo(arg_type);
-    //    if (arg_type_info == .Type) {
-    //        const Wrapper = struct {
-    //            fn wrapped(comptime p1: arg_type) callconv(calling_convention) function_type.return_type.? {
-    //                const span = Span.open(id);
-    //                defer span.close();
-    //                return f(p1);
-    //            }
-    //        };
-    //        return Wrapper.wrapped;
-    //    } else {
-    //        const Wrapper = struct {
-    //            fn wrapped(p1: arg_type) callconv(calling_convention) function_type.return_type.? {
-    //                const span = Span.open(id);
-    //                defer span.close();
-    //                return f(p1);
-    //            }
-    //        };
-    //        return Wrapper.wrapped;
-    //    }
-    //}
+inline fn instrument2Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
+    const calling_convention = function_arguments.calling_convention;
+    const arg_1 = function_arguments.arguments[0];
+    const arg_2 = function_arguments.arguments[1];
+    switch (function_arguments.argument_pattern) {
+        .vanilla => {
+            const arg_1_type = arg_1.arg_type.?;
+            const arg_2_type = arg_2.arg_type.?;
+            const Wrapper = struct {
+                fn wrapped(p1: arg_1_type, p2: arg_2_type) callconv(calling_convention) function_arguments.return_type {
+                    const span = Span.open(id);
+                    defer span.close();
+                    return f(p1, p2);
+                }
+            };
+            return Wrapper.wrapped;
+        },
+        .type_is_first_argument => {
+            const Wrapper = struct {
+                const arg_2_type = arg_2.arg_type.?;
+                fn wrapped(comptime p1: type, p2: arg_2_type) callconv(calling_convention) function_arguments.return_type {
+                    const span = Span.open(id);
+                    defer span.close();
+                    return f(p1, p2);
+                }
+            };
+            return Wrapper.wrapped;
+        },
+        .anytype_is_last_argument => {
+            const arg_1_type = arg_1.arg_type.?;
+            const Wrapper = struct {
+                fn wrapped(p1: arg_1_type, p2: anytype) callconv(calling_convention) function_arguments.return_type {
+                    const span = Span.open(id);
+                    defer span.close();
+                    return f(p1, p2);
+                }
+            };
+            return Wrapper.wrapped;
+        },
+        .type_is_first_anytype_last => {
+            const Wrapper = struct {
+                fn wrapped(comptime p1: type, p2: anytype) callconv(calling_convention) function_arguments.return_type {
+                    const span = Span.open(id);
+                    defer span.close();
+                    return f(p1, p2);
+                }
+            };
+            return Wrapper.wrapped;
+        },
+    }
 }
