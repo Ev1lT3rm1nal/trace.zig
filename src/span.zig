@@ -14,13 +14,7 @@ else
 
 pub inline fn open(comptime id: []const u8) Span {
     if (!enable) {
-        const has_enable_trace = @hasDecl(root, "enable_trace");
-        if (has_enable_trace) {
-            @panic("enable should be true");
-        } else {
-            @panic("Cannot find enable_trace at root.");
-        }
-        //return .{};
+        return .{};
     } else {
         const trace_point = TracePoint{
             .id = id,

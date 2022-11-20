@@ -5,7 +5,7 @@ const instrument = trace.instrument;
 const AllocatorError = std.mem.Allocator.Error;
 
 // Required to enable tracing
-pub const enable_trace = true;
+pub const enable_trace = false;
 
 inline fn calculationExample() AllocatorError!f64 {
     var prng = std.rand.DefaultPrng.init(1);
