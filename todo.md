@@ -5,6 +5,9 @@
   * Readme
     * Add examples documentation
   * Contributing
+    * Analysis
+    * Writers
+    * Clocks
   * Changelog
 * Documentation
   * All public functions
@@ -18,5 +21,3 @@
   * Reddit
   * [zig - GitHub Issue - 5987](https://github.com/ziglang/zig/issues/5987)
   * Awesome zig
-  * [ziglearn - Chapter 3 - packages](https://ziglearn.org/chapter-3/#packages)
-  * Package manager (see ziglearn link above)
