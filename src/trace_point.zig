@@ -19,6 +19,49 @@ pub const TraceType = enum(u2) {
     }
 };
 
+test "TraceType.format" {
+    // Arrange
+    const expect = std.testing.expect;
+    const eql = std.mem.eql;
+    const test_allocator = std.testing.allocator;
+    const trace_type_span_open = TraceType.span_open;
+    const trace_type_span_close = TraceType.span_close;
+    const trace_type_trace_event = TraceType.event;
+    const trace_type_trace_error = TraceType.error_event;
+
+    // Act
+    const trace_type_span_open_string = try std.fmt.allocPrint(test_allocator, "{}", .{trace_type_span_open});
+    defer test_allocator.free(trace_type_span_open_string);
+    const trace_type_span_close_string = try std.fmt.allocPrint(test_allocator, "{}", .{trace_type_span_close});
+    defer test_allocator.free(trace_type_span_close_string);
+    const trace_type_trace_event_string = try std.fmt.allocPrint(test_allocator, "{}", .{trace_type_trace_event});
+    defer test_allocator.free(trace_type_trace_event_string);
+    const trace_type_trace_error_string = try std.fmt.allocPrint(test_allocator, "{}", .{trace_type_trace_error});
+    defer test_allocator.free(trace_type_trace_error_string);
+
+    // Assert
+    try expect(eql(
+        u8,
+        trace_type_span_open_string,
+        "Span open",
+    ));
+    try expect(eql(
+        u8,
+        trace_type_span_close_string,
+        "Span close",
+    ));
+    try expect(eql(
+        u8,
+        trace_type_trace_event_string,
+        "Event",
+    ));
+    try expect(eql(
+        u8,
+        trace_type_trace_error_string,
+        "Error event",
+    ));
+}
+
 pub const TracePoint = struct {
     id: []const u8,
     timestamp: u64,
@@ -32,6 +75,7 @@ pub const TracePoint = struct {
 };
 
 test "TracePoint.format" {
+    // Arrange
     const testing = std.testing;
     const expect = std.testing.expect;
     const eql = std.mem.eql;
@@ -41,8 +85,12 @@ test "TracePoint.format" {
         .trace_type = TraceType.span_close,
         .timestamp = 123,
     };
+
+    // Act
     const trace_point_string = try std.fmt.allocPrint(test_allocator, "{}", .{trace_point});
     defer test_allocator.free(trace_point_string);
+
+    // Assert
     try expect(eql(
         u8,
         trace_point_string,
