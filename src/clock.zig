@@ -8,24 +8,38 @@ pub inline fn timestamp() u64 {
     if (@hasDecl(root, "tracePointTimestamp")) {
         return root.tracePointTimestamp();
     } else {
-        return defaultTimeStamp();
+        return defaultTimestamp();
     }
 }
 
-inline fn defaultTimeStamp() u64 {
+test "timestamp" {
+    // Arrange
+
+    // Act
+    const ts1 = timestamp();
+    const ts2 = timestamp();
+
+    // Assert
+    try std.testing.expect(ts1 != 0);
+    try std.testing.expect(ts2 != 0);
+    try std.testing.expect(ts1 < ts2);
+}
+
+inline fn defaultTimestamp() u64 {
     // return 0 when Instant.now returns an error.
     const instant = Instant.now() catch return 0;
     const ts = instant.timestamp;
     return convertTimestamp(@TypeOf(ts), ts);
 }
 
-test "defaultTimeStamp" {
-    const ts1 = defaultTimeStamp();
+test "defaultTimestamp" {
+    // Arrange
+    // Act
+    const ts1 = defaultTimestamp();
+    const ts2 = defaultTimestamp();
+    // Assert
     try std.testing.expect(ts1 != 0);
-    std.debug.print("\ntimestamp={}\n", .{ts1});
-    const ts2 = defaultTimeStamp();
     try std.testing.expect(ts2 != 0);
-    std.debug.print("timestamp={}\n", .{ts2});
     try std.testing.expect(ts1 < ts2);
 }
 
@@ -37,11 +51,19 @@ inline fn convertTimestamp(comptime T: type, time_stamp: T) u64 {
         const tv_sec = time_stamp.tv_sec;
         const tv_nsec = time_stamp.tv_nsec;
         if (tv_sec < 0) {
-            std.log.err("Negative timestamp values w.r.t to epoch: {}", .{time_stamp});
+            if (@import("builtin").is_test) {
+                std.log.debug("Negative timestamp values w.r.t to epoch: {}", .{time_stamp});
+            } else {
+                std.log.err("Negative timestamp values w.r.t to epoch: {}", .{time_stamp});
+            }
             return 0;
         }
         if (tv_nsec < 0) {
-            std.log.err("Negative timestamp values w.r.t to epoch: {}", .{time_stamp});
+            if (@import("builtin").is_test) {
+                std.log.debug("Negative timestamp values w.r.t to epoch: {}", .{time_stamp});
+            } else {
+                std.log.err("Negative timestamp values w.r.t to epoch: {}", .{time_stamp});
+            }
             return 0;
         }
         return (@intCast(u64, tv_sec) * 1_000_000_000) + @intCast(u64, tv_nsec);
@@ -51,4 +73,51 @@ inline fn convertTimestamp(comptime T: type, time_stamp: T) u64 {
         @compileLog("Instant.now return type={}", .{T});
         return 0;
     }
+}
+
+test "convertTimestamp for u64" {
+    // Arrange
+    // Act
+    const ts = convertTimestamp(u64, 17);
+    // Assert
+    try std.testing.expect(ts == 17);
+}
+
+test "convertTimestamp for postive os.timespec" {
+    // Arrange
+    const expect = std.testing.expect;
+    const os_ts = os.timespec{
+        .tv_sec = 17,
+        .tv_nsec = 333,
+    };
+    // Act
+    const ts = convertTimestamp(os.timespec, os_ts);
+    // Assert
+    try expect(ts == 17_000_000_333);
+}
+
+test "convertTimestamp for negaive tv_sec os.timespec" {
+    // Arrange
+    const expect = std.testing.expect;
+    const os_ts = os.timespec{
+        .tv_sec = -17,
+        .tv_nsec = 333,
+    };
+    // Act
+    const ts = convertTimestamp(os.timespec, os_ts);
+    // Assert
+    try expect(ts == 0);
+}
+
+test "convertTimestamp for negative tv_nsec os.timespec" {
+    // Arrange
+    const expect = std.testing.expect;
+    const os_ts = os.timespec{
+        .tv_sec = 17,
+        .tv_nsec = -333,
+    };
+    // Act
+    const ts = convertTimestamp(os.timespec, os_ts);
+    // Assert
+    try expect(ts == 0);
 }

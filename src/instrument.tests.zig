@@ -2,7 +2,7 @@ const instrument = @import("instrument.zig").instrument;
 
 fn zeroArgVoidFunction() void {
     const std = @import("std");
-    std.debug.print("Zero arg void function called.", .{});
+    std.log.debug("Zero arg void function called.", .{});
 }
 
 const instrumentedZeroArgVoidFunction = instrument(zeroArgVoidFunction, "zero arg void function");
@@ -212,7 +212,7 @@ fn comptimeAnytypeOneArgumentVoidFunction(comptime f: anytype) void {
     const std = @import("std");
     const type_info = @typeInfo(@TypeOf(f));
     const arg = type_info.Fn.args[0];
-    std.debug.print("Param of comptime anytype: {}", .{arg});
+    std.log.debug("Param of comptime anytype: {}", .{arg});
 }
 
 // Currently not supported since it is not clear how to identify if an argument is comptime
