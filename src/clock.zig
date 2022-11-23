@@ -12,35 +12,11 @@ pub inline fn timestamp() u64 {
     }
 }
 
-test "timestamp" {
-    // Arrange
-
-    // Act
-    const ts1 = timestamp();
-    const ts2 = timestamp();
-
-    // Assert
-    try std.testing.expect(ts1 != 0);
-    try std.testing.expect(ts2 != 0);
-    try std.testing.expect(ts1 < ts2);
-}
-
 inline fn defaultTimestamp() u64 {
     // return 0 when Instant.now returns an error.
     const instant = Instant.now() catch return 0;
     const ts = instant.timestamp;
     return convertTimestamp(@TypeOf(ts), ts);
-}
-
-test "defaultTimestamp" {
-    // Arrange
-    // Act
-    const ts1 = defaultTimestamp();
-    const ts2 = defaultTimestamp();
-    // Assert
-    try std.testing.expect(ts1 != 0);
-    try std.testing.expect(ts2 != 0);
-    try std.testing.expect(ts1 < ts2);
 }
 
 inline fn convertTimestamp(comptime T: type, time_stamp: T) u64 {
@@ -120,4 +96,28 @@ test "convertTimestamp for negative tv_nsec os.timespec" {
     const ts = convertTimestamp(os.timespec, os_ts);
     // Assert
     try expect(ts == 0);
+}
+
+test "timestamp" {
+    // Arrange
+
+    // Act
+    const ts1 = timestamp();
+    const ts2 = timestamp();
+
+    // Assert
+    try std.testing.expect(ts1 != 0);
+    try std.testing.expect(ts2 != 0);
+    try std.testing.expect(ts1 < ts2);
+}
+
+test "defaultTimestamp" {
+    // Arrange
+    // Act
+    const ts1 = defaultTimestamp();
+    const ts2 = defaultTimestamp();
+    // Assert
+    try std.testing.expect(ts1 != 0);
+    try std.testing.expect(ts2 != 0);
+    try std.testing.expect(ts1 < ts2);
 }

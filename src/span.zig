@@ -26,7 +26,7 @@ pub inline fn open(comptime id: []const u8) Span {
     }
 }
 
-const SpanInner = struct {
+const PrivateSpan = struct {
     id: []const u8,
     pub inline fn close(self: @This()) void {
         const trace_point = TracePoint{
@@ -38,16 +38,20 @@ const SpanInner = struct {
     }
 };
 
-const Span = if (enable) SpanInner else struct {
+const Span = if (enable) PrivateSpan else struct {
     pub inline fn close(self: @This()) void {
         _ = self;
-        if (builtin.is_test) {
-            try std.testing.expect(false);
-        }
     }
 };
 
 test "Span open and close" {
     const span = open("Span Test Id 1");
     defer span.close();
+}
+
+test "PrivateSpan" {
+    // Arrange
+    const private_span = PrivateSpan{ .id = "Test Private Span" };
+    // Act
+    private_span.close();
 }

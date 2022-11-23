@@ -19,6 +19,42 @@ pub const TraceType = enum(u2) {
     }
 };
 
+pub const TracePoint = struct {
+    id: []const u8,
+    timestamp: u64,
+    trace_type: TraceType,
+    pub fn format(self: TracePoint, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
+        try writer.print("tp;{d};{};{s}", .{ self.timestamp, @enumToInt(self.trace_type), self.id });
+        try writer.writeAll("");
+    }
+};
+
+test "TracePoint.format" {
+    // Arrange
+    const testing = std.testing;
+    const expect = std.testing.expect;
+    const eql = std.mem.eql;
+    const test_allocator = testing.allocator;
+    const trace_point = TracePoint{
+        .id = "Test Id",
+        .trace_type = TraceType.span_close,
+        .timestamp = 123,
+    };
+
+    // Act
+    const trace_point_string = try std.fmt.allocPrint(test_allocator, "{}", .{trace_point});
+    defer test_allocator.free(trace_point_string);
+
+    // Assert
+    try expect(eql(
+        u8,
+        trace_point_string,
+        "tp;123;1;Test Id",
+    ));
+}
+
 test "TraceType.format" {
     // Arrange
     const expect = std.testing.expect;
@@ -59,41 +95,5 @@ test "TraceType.format" {
         u8,
         trace_type_trace_error_string,
         "Error event",
-    ));
-}
-
-pub const TracePoint = struct {
-    id: []const u8,
-    timestamp: u64,
-    trace_type: TraceType,
-    pub fn format(self: TracePoint, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
-        _ = fmt;
-        _ = options;
-        try writer.print("tp;{d};{};{s}", .{ self.timestamp, @enumToInt(self.trace_type), self.id });
-        try writer.writeAll("");
-    }
-};
-
-test "TracePoint.format" {
-    // Arrange
-    const testing = std.testing;
-    const expect = std.testing.expect;
-    const eql = std.mem.eql;
-    const test_allocator = testing.allocator;
-    const trace_point = TracePoint{
-        .id = "Test Id",
-        .trace_type = TraceType.span_close,
-        .timestamp = 123,
-    };
-
-    // Act
-    const trace_point_string = try std.fmt.allocPrint(test_allocator, "{}", .{trace_point});
-    defer test_allocator.free(trace_point_string);
-
-    // Assert
-    try expect(eql(
-        u8,
-        trace_point_string,
-        "tp;123;1;Test Id",
     ));
 }
