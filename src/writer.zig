@@ -2,6 +2,7 @@ const std = @import("std");
 const root = @import("root");
 const TracePoint = @import("trace_point.zig").TracePoint;
 
+/// The write function
 pub inline fn write(trace_point: TracePoint) void {
     if (@hasDecl(root, "writeTracePoint")) {
         root.writeTracePoint(trace_point);

@@ -1,4 +1,3 @@
-const std = @import("std");
 const root = @import("root");
 const builtin = @import("builtin");
 const tracepoint = @import("trace_point.zig");
@@ -12,7 +11,18 @@ const enable = if (@hasDecl(root, "enable_trace")) root.enable_trace else if (bu
 else
     false;
 
-pub inline fn open(comptime id: []const u8) Span {
+/// Opens a span.
+///
+/// ## Returns
+///
+/// A span. If tracing is not enabled (define `pub const enable_trace=true` in your `root`)
+/// this function returns an empty struct.
+/// Otherwise it returns a strcut with the public method `close` with no parameters.
+/// This method shoud be called whenever the span needs to be closed. See Span namespace
+/// documentation for complete usage example.
+pub inline fn open(
+    /// A unique identifier.
+    comptime id: []const u8) Span {
     if (!enable) {
         return .{};
     } else {

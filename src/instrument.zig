@@ -1,7 +1,53 @@
 const std = @import("std");
 const Span = @import("span.zig");
 
-pub inline fn instrument(comptime f: anytype, id: []const u8) @TypeOf(f) {
+/// Instrument enables to instrument a function (if it is supported).
+///
+/// An instrumented function is "wrapped" with a Span. This means upon
+/// calling this function a span is opened before the actual call closed
+/// when the function returns.
+///
+/// Emits a compile error if an unsupported function is instrumented.
+///
+/// ## Example usage
+///
+/// The examples assumes that you have cloned this repository into the path `./third_party/`.
+/// trace.zig can also be used as a package, the basic steps are described in the `README.md` of the repository.
+///
+/// ### Instrumenting a supported function
+///
+/// ```
+/// const trace = @import("./third_party/trace.zig/src/main.zig");
+/// const instrument = trace.Instrument;
+///
+/// fn myAdd(a: u64, b:u64) u64 {
+///     return a+b;
+/// }
+/// const instrumentedAdd = instrumentAdd(myAdd, "myAdd");
+/// //                                            ^
+/// //                                            |
+/// // A unique identifier is required again. The function name can be used,
+/// // but should be unique.
+///
+/// fn anotherFunction() void {
+///     // The instrumented function can be called as the original function.
+///     const value = instrumentedAdd(5,6);
+///     _ = value;
+/// }
+/// ```
+///
+/// ### Usage in member functions of structs
+///
+/// TODO
+///
+/// ## Supported functions
+///
+/// ## Some examples of unsupported functions
+pub inline fn instrument(
+    /// The function that shall be instrumented
+    comptime f: anytype,
+    /// A unique identifier.
+    id: []const u8) @TypeOf(f) {
     const function_arguments = validateFunction(f);
 
     const wrapped_function = switch (function_arguments.number_of_arguments) {
