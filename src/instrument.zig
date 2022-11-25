@@ -26,8 +26,7 @@ const Span = @import("span.zig");
 ///     return a+b;
 /// }
 /// const instrumentedAdd = instrumentAdd(myAdd, "myAdd");
-/// //                                            ^
-/// //                                            |
+/// //                                            ^^^^^
 /// // A unique identifier is required again. The function name can be used,
 /// // but should be unique.
 ///
@@ -40,7 +39,7 @@ const Span = @import("span.zig");
 ///
 /// ### Usage in member functions of structs
 ///
-/// ```Zig
+/// ```
 /// const Point = struct {
 ///     x: u32,
 ///     y: u32,
@@ -86,7 +85,7 @@ const Span = @import("span.zig");
 ///
 /// 1. A function with three "vanilla" arguments is supported:
 ///
-/// ```Zig
+/// ```
 /// fn func(a:u8,b:i16,c:u128) void {
 ///     _ = a;
 ///     _ = b;
@@ -96,7 +95,7 @@ const Span = @import("span.zig");
 ///
 /// 2. A function with a `type` as first argument, a "vanilla" as second and an `anytype` as last
 ///
-/// ```Zig
+/// ```
 /// fn func2(comptime T:type, b:u8, c: anytype) void {
 ///     _ = T;
 ///     _ = b;
@@ -125,7 +124,7 @@ const Span = @import("span.zig");
 ///
 /// 1. Return type is null
 ///
-/// ```Zig
+/// ```
 /// fn pow2(comptime T: type, x: T) @TypeOf(x) {
 ///     return x * x;
 /// }
@@ -143,7 +142,7 @@ const Span = @import("span.zig");
 ///
 /// 3. Two (or more) anytype arguments
 ///
-/// ```Zig
+/// ```
 /// fn add(a: anytype, b:anytype) void {
 ///     const c = a + b;
 ///     _ = c;

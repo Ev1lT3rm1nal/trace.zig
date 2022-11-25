@@ -26,7 +26,7 @@ const trace = @import("<path to the repository>/src/main.zig");
 
 * Or define it as a package in your `build.zig`:
 
-```zig
+```Zig
 // build.zig
 // ...
     const exe = b.addExecutable("name_of_executable", "src/main.zig");
@@ -36,7 +36,7 @@ const trace = @import("<path to the repository>/src/main.zig");
 
 * And then import the package via `@import` and the name of the package (here `trace`):
 
-```zig
+```Zig
 const trace = @import("trace");
 ```
 

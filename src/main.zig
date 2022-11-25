@@ -6,13 +6,13 @@
 //! 2. Clone / copy repository locally
 //! 3. Either import `main.zig` into your project:
 //!
-//! ```Zig
+//! ```
 //! const trace = @import("<path to the repository>/src/main.zig");
 //! ```
 //!
 //! 4. Or define it as a package in your `build.zig`:
 //!
-//! ```zig
+//! ```
 //! // build.zig
 //! // ...
 //!     const exe = b.addExecutable("name_of_executable", "src/main.zig");
@@ -22,7 +22,7 @@
 //!
 //! 5. And then import the package via `@import` and the name of the package (here `trace`):
 //!
-//! ```zig
+//! ```
 //! const trace = @import("trace");
 //! ```
 //!
@@ -34,7 +34,7 @@
 //! To enable tracing (otherwise it will fallback to no-ops) one must define a public boolean constant
 //! in its `root` file:
 //!
-//! ```Zig
+//! ```
 //! pub const enable_trace = true;
 //! ```
 //!
@@ -79,7 +79,7 @@
 //!
 //! Some functions can be instrumented and used as shown below:
 //!
-//! ```Zig
+//! ```
 //! const trace = @import("./third_party/trace.zig/src/main.zig");
 //! const instrument = trace.Instrument;
 //!
@@ -140,7 +140,7 @@
 //! (using `std.log`) so called trace points. This can be overriden if a function with the
 //! following name and signature is implemented in the `root` file:
 //!
-//! ```Zig
+//! ```
 //! const TracePoint = @import(../third_party/trace.zig/src/trace_point.zig").TracePoint;
 //!
 //! pub inline fn writeTracePoint(trace_point: TracePoint) void {
@@ -160,7 +160,7 @@
 //! OS (in nanoseconds). This behavior can also be override, when the following name and signature is implemented in
 //! the `root` file:
 //!
-//! ```Zig
+//! ```
 //! pub inline tracePointTimestamp() u64 {
 //!     var timestamp: u64 = 0;
 //!     // custom implementation
