@@ -63,13 +63,13 @@
 //! ```
 //!
 //! When:
-//! 
+//!
 //! 1. trace is enabled (i.e. `pub const enable_trace=true`), and
 //! 2. the the default writer is used, and
 //! 3. `myFunc` is called,
-//! 
+//!
 //! then something like the below output will be logged with `std.log`:
-//! 
+//!
 //! ```shell
 //! info: ;tp;2215696614260;0;A unique identifier
 //! info: ;tp;2215696653476;1;A unique identifier
@@ -78,11 +78,11 @@
 //! ## instrument
 //!
 //! Some functions can be instrumented and used as shown below:
-//! 
+//!
 //! ```Zig
 //! const trace = @import("./third_party/trace.zig/src/main.zig");
 //! const instrument = trace.Instrument;
-//! 
+//!
 //! fn myAdd(a: u64, b:u64) u64 {
 //!     return a+b;
 //! }
@@ -90,22 +90,22 @@
 //! //                                            ^^^^^
 //! // A unique identifier is required again. The function name can be used,
 //! // but should be unique regarding the overall usage of identifiers.
-//! 
+//!
 //! fn anotherFunction() void {
 //!     // The instrumented function can be called as the original function.
 //!     const value = instrumentedAdd(5,6);
 //!     _ = value;
 //! }
 //! ```
-//! 
+//!
 //! When:
-//! 
+//!
 //! 1. trace is enabled (i.e. `pub const enable_trace=true`), and
 //! 2. the the default writer is used, and
 //! 3. `anotherFunction` is called,
-//! 
+//!
 //! then something like the below output will be logged with `std.log`:
-//! 
+//!
 //! ```shell
 //! info: ;tp;2215696614260;0;myAdd
 //! info: ;tp;2215696653476;1;myAdd
@@ -139,10 +139,10 @@
 //! When tracing is enabled (i.e. `enable_trace = true`) then trace.zig will log
 //! (using `std.log`) so called trace points. This can be overriden if a function with the
 //! following name and signature is implemented in the `root` file:
-//! 
+//!
 //! ```Zig
 //! const TracePoint = @import(../third_party/trace.zig/src/trace_point.zig").TracePoint;
-//! 
+//!
 //! pub inline fn writeTracePoint(trace_point: TracePoint) void {
 //!     // custom implementation here
 //! }
@@ -159,7 +159,7 @@
 //! In the default behavior, trace.zig uses `std.time.Instant` to get a timestamp from the underlying
 //! OS (in nanoseconds). This behavior can also be override, when the following name and signature is implemented in
 //! the `root` file:
-//! 
+//!
 //! ```Zig
 //! pub inline tracePointTimestamp() u64 {
 //!     var timestamp: u64 = 0;
@@ -169,8 +169,8 @@
 //!
 //! In this way an own timestamp implementation can be provided.
 //! However, ideally:
-//! 
-//! 1. The timestamp is monotonic (which is currently not the case in the default implementation) 
+//!
+//! 1. The timestamp is monotonic (which is currently not the case in the default implementation)
 //! 2. The resolution of the timestamp is known (which simplifies the comparison to other traces or events etc.)
 //!
 //! ## Freestanding

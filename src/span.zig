@@ -1,4 +1,4 @@
-//! Span namespace contains the types and functions that realize spans. 
+//! Span namespace contains the types and functions that realize spans.
 //! Spans enable to trace a time span in the source code.
 //!
 //! ## Further example usage
@@ -57,9 +57,7 @@ else
 /// Otherwise it returns a strcut with the public method `close` with no parameters.
 /// This method shoud be called whenever the span needs to be closed. See Span namespace
 /// documentation for complete usage example.
-pub inline fn open(
-    /// A unique identifier.
-    comptime id: []const u8) Span {
+pub inline fn open(comptime id: []const u8) Span {
     if (!enable) {
         return .{};
     } else {

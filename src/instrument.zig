@@ -51,7 +51,7 @@ const Span = @import("span.zig");
 ///     // the instrumented method.
 ///     const dotProduct = instrument(innerDotProduct, "Point.dotProduct");
 /// };
-/// 
+///
 /// test "Struct method" {
 ///     const point_1 = Point{
 ///         .x = 5,
@@ -77,8 +77,8 @@ const Span = @import("span.zig");
 /// 2. Arguments can be vanilla arguments, i.e. without specific identifiers like `comptime` (e.g. `u8`).
 /// 3. The first argument can be of type `type`, i.e. it requires the `comptime` qualifier.
 /// 4. The last argument can be of type `anytype`.
-/// 5. The return type is not null. This should be solvable in the future 
-///    if I understand this comment correctly: 
+/// 5. The return type is not null. This should be solvable in the future
+///    if I understand this comment correctly:
 ///    [`std.builtin`](https://github.com/ziglang/zig/blob/5b9d0a446af4e74c9f915a34b39de83d9b2335f9/lib/std/builtin.zig#L371-L372).
 /// 6. A combination of the above.
 ///
@@ -109,10 +109,10 @@ const Span = @import("span.zig");
 ///
 /// 1. I've not found a generic way to iterate over the number of arguments.
 ///    This means I switch case over the number of arguments.
-/// 2. I cannot extract the information if a parameter requires `comptime` from 
+/// 2. I cannot extract the information if a parameter requires `comptime` from
 ///    `std.builtin.Type` other than the inherent knowledge that arguments of type
 ///    `type`require `comptime`
-/// 3. Although if an argument is generic can be extracted (via 
+/// 3. Although if an argument is generic can be extracted (via
 ///    `std.builtin.Type.Fn.Param`) I am not sure if a generic type
 ///    can be replaced with `anytype` or how to extract the type of a generic type.
 ///    Using anytype as the last argument seemed like a reasonable pattern to support.
@@ -130,7 +130,7 @@ const Span = @import("span.zig");
 ///     return x * x;
 /// }
 /// ```
-/// 
+///
 /// 2. Currently not supported since it is not clear how to identify an argument is `comptime`
 ///
 /// ```
@@ -150,12 +150,7 @@ const Span = @import("span.zig");
 /// }
 /// ```
 ///
-pub inline fn instrument(
-    /// The function that shall be instrumented
-    comptime f: anytype,
-
-    /// A unique identifier
-    id: []const u8) @TypeOf(f) {
+pub inline fn instrument(comptime f: anytype, id: []const u8) @TypeOf(f) {
     const function_arguments = validateFunction(f);
 
     const wrapped_function = switch (function_arguments.number_of_arguments) {
