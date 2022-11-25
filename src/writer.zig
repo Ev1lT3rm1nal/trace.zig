@@ -2,7 +2,9 @@ const std = @import("std");
 const root = @import("root");
 const TracePoint = @import("trace_point.zig").TracePoint;
 
-/// The write function
+/// The write function that writes a `TracePoint` either
+/// using the `writeDefault` function or the `writeTracePoint`
+/// function realized in the `root` file.
 pub inline fn write(trace_point: TracePoint) void {
     if (@hasDecl(root, "writeTracePoint")) {
         root.writeTracePoint(trace_point);
@@ -11,6 +13,9 @@ pub inline fn write(trace_point: TracePoint) void {
     }
 }
 
+/// The default implementation of the `write`function.
+///
+/// Logs `TracePoints` with `std.log.info`.
 inline fn writeDefault(trace_point: TracePoint) void {
     std.log.info(";{}", .{trace_point});
 }

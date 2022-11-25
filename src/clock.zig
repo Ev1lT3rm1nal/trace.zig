@@ -1,9 +1,13 @@
+//! The namespace containing the functions needed to provide timestamps,
+//! which are necessary for `TracePoint`s.
+
 const std = @import("std");
 const Instant = std.time.Instant;
 const builtin = std.builtin;
 const os = std.os;
 const root = @import("root");
 
+/// Function that returns a timestamp.
 pub inline fn timestamp() u64 {
     if (@hasDecl(root, "tracePointTimestamp")) {
         return root.tracePointTimestamp();
@@ -12,6 +16,10 @@ pub inline fn timestamp() u64 {
     }
 }
 
+/// Default timestamp implementation. Returns a timestamp in nanoseconds
+/// resolution.
+///
+/// Uses `std.time.Instant` which is currently not monotonic.
 inline fn defaultTimestamp() u64 {
     // return 0 when Instant.now returns an error.
     const instant = Instant.now() catch return 0;
@@ -19,6 +27,14 @@ inline fn defaultTimestamp() u64 {
     return convertTimestamp(@TypeOf(ts), ts);
 }
 
+/// Converts a timestamp into `u64` value.
+///
+/// This is necessary since `Instant.now` returns a `os.timespec`,
+/// instead of a u64.
+///
+/// If the returned value is negative w.r.t. to the epoch, then 0 is returned
+/// and an error is logged. (This is lowered to `std.debug.log` so that
+/// test return in a success without further information on occured errors).
 inline fn convertTimestamp(comptime T: type, time_stamp: T) u64 {
     if (T == os.timespec) {
         // Hint:

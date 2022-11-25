@@ -1,3 +1,9 @@
+//! This file contains the tests for the instrument function.
+//!
+//! This is necessary since functions cannot be created inside
+//! `test` blocks, and I didn't want to "clutter" the productive
+//! code of instrument.zig with functions used only for testing.
+
 const instrument = @import("instrument.zig").instrument;
 
 fn zeroArgVoidFunction() void {

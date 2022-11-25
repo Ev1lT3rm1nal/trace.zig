@@ -1,3 +1,5 @@
+//! Namespace that contains the `instrument` function.
+
 const std = @import("std");
 const Span = @import("span.zig");
 
@@ -38,15 +40,121 @@ const Span = @import("span.zig");
 ///
 /// ### Usage in member functions of structs
 ///
-/// TODO
+/// ```Zig
+/// const Point = struct {
+///     x: u32,
+///     y: u32,
+///     const Self = Point;
+///     fn innerDotProduct(self: Point, other: Point) u32 {
+///         return self.x * other.x + self.y * other.y;
+///     }
+///     // the instrumented method.
+///     const dotProduct = instrument(innerDotProduct, "Point.dotProduct");
+/// };
+/// 
+/// test "Struct method" {
+///     const point_1 = Point{
+///         .x = 5,
+///         .y = 6,
+///     };
+///     const point_2 = Point{
+///         .x = 6,
+///         .y = 5,
+///     };
+///     // The instrumented function can be called with the "." syntax as
+///     // usual.
+///     const dot = point_1.dotProduct(point_2);
+///     try @import("std").testing.expect(60 == dot);
+/// }
+/// ```
 ///
 /// ## Supported functions
 ///
+/// The following rules define which type of function (or more specific function arguments)
+/// are supported:
+///
+/// 1. From zero up to three arguments supported.
+/// 2. Arguments can be vanilla arguments, i.e. without specific identifiers like `comptime` (e.g. `u8`).
+/// 3. The first argument can be of type `type`, i.e. it requires the `comptime` qualifier.
+/// 4. The last argument can be of type `anytype`.
+/// 5. The return type is not null. This should be solvable in the future 
+///    if I understand this comment correctly: 
+///    [`std.builtin`](https://github.com/ziglang/zig/blob/5b9d0a446af4e74c9f915a34b39de83d9b2335f9/lib/std/builtin.zig#L371-L372).
+/// 6. A combination of the above.
+///
+/// ### Examples
+///
+/// 1. A function with three "vanilla" arguments is supported:
+///
+/// ```Zig
+/// fn func(a:u8,b:i16,c:u128) void {
+///     _ = a;
+///     _ = b;
+///     _ = c;
+/// }
+/// ```
+///
+/// 2. A function with a `type` as first argument, a "vanilla" as second and an `anytype` as last
+///
+/// ```Zig
+/// fn func2(comptime T:type, b:u8, c: anytype) void {
+///     _ = T;
+///     _ = b;
+///     _ = c;
+/// }
+/// ```
+/// ### Explanations
+///
+/// These limitations occur from the fact, that:
+///
+/// 1. I've not found a generic way to iterate over the number of arguments.
+///    This means I switch case over the number of arguments.
+/// 2. I cannot extract the information if a parameter requires `comptime` from 
+///    `std.builtin.Type` other than the inherent knowledge that arguments of type
+///    `type`require `comptime`
+/// 3. Although if an argument is generic can be extracted (via 
+///    `std.builtin.Type.Fn.Param`) I am not sure if a generic type
+///    can be replaced with `anytype` or how to extract the type of a generic type.
+///    Using anytype as the last argument seemed like a reasonable pattern to support.
+///    Also if I support multiple generics I need to define more patterns due to reason 1.
+/// 4. Patterns seemed like a reasonable solution that would simplify the implementation (I can
+///    switch over the analyzed pattern as opposed to an if-else hell).
+/// 5. I have no idea how to define a return type that is null.
+///
 /// ## Some examples of unsupported functions
+///
+/// 1. Return type is null
+///
+/// ```Zig
+/// fn pow2(comptime T: type, x: T) @TypeOf(x) {
+///     return x * x;
+/// }
+/// ```
+/// 
+/// 2. Currently not supported since it is not clear how to identify an argument is `comptime`
+///
+/// ```
+/// fn debugPrintTypeName(comptime x: anytype) void {
+///     const std = @import("std");
+///     const type_name = @typeName(@TypeOf(x));
+///     std.debug.print("Type name: {}", .{type_name});
+/// }
+/// ```
+///
+/// 3. Two (or more) anytype arguments
+///
+/// ```Zig
+/// fn add(a: anytype, b:anytype) void {
+///     const c = a + b;
+///     _ = c;
+/// }
+/// ```
+///
 pub inline fn instrument(
     /// The function that shall be instrumented
     comptime f: anytype,
-    /// A unique identifier.
+
+    /// A unique identifier
     id: []const u8) @TypeOf(f) {
     const function_arguments = validateFunction(f);
 
@@ -70,9 +178,10 @@ const FunctionArgumentPattern = enum {
     /// anytype is the last argument, e.g. fn format(fmt: [] const u8, args: anytype) void {}
     anytype_is_last_argument,
     /// A type is the first argument, the last argument is anytype the last, e.g. fn typeFirstAnytypeLast(comptime T: type, args: anytype) void {}
-    type_is_first_anytype_last,
+    type_is_first_anytype_is_last,
 };
 
+/// Struct used to validate and analyze a function according their arguments.
 const FunctionArguments = struct {
     calling_convention: std.builtin.CallingConvention,
     arguments: []const std.builtin.Type.Fn.Param,
@@ -81,6 +190,8 @@ const FunctionArguments = struct {
     number_of_arguments: usize,
 };
 
+/// Validates a function to check if it is supported and the function argument
+/// pattern the function realizes.
 fn validateFunction(comptime f: anytype) FunctionArguments {
     const function_type_info = @typeInfo(@TypeOf(f)).Fn;
     const args = function_type_info.args;
@@ -102,6 +213,7 @@ fn validateFunction(comptime f: anytype) FunctionArguments {
     return function_arguments;
 }
 
+/// Analyse the function argument pattern of the given function.
 fn analyseForFunctionArgumentsPattern(comptime arguments: []const std.builtin.Type.Fn.Param, number_of_arguments: usize) FunctionArgumentPattern {
     var number_of_type_arguments = 0;
     var number_of_anytypes = 0;
@@ -146,13 +258,14 @@ fn analyseForFunctionArgumentsPattern(comptime arguments: []const std.builtin.Ty
     else if (!first_argument_is_of_type_type and last_argument_is_anytype)
         .anytype_is_last_argument
     else if (first_argument_is_of_type_type and last_argument_is_anytype)
-        .type_is_first_anytype_last
+        .type_is_first_anytype_is_last
     else
         .vanilla;
 
     return pattern;
 }
 
+/// Instruments a function with no arguments.
 inline fn instrument0Args(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
     const calling_convention = function_arguments.calling_convention;
     const Wrapper = struct {
@@ -165,6 +278,7 @@ inline fn instrument0Args(comptime f: anytype, comptime function_arguments: Func
     return Wrapper.wrapped;
 }
 
+/// Instruments a function with 1 argument.
 inline fn instrument1Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
     const calling_convention = function_arguments.calling_convention;
     const arg = function_arguments.arguments[0];
@@ -204,6 +318,7 @@ inline fn instrument1Arg(comptime f: anytype, comptime function_arguments: Funct
     }
 }
 
+/// Instruments a function with 2 arguments.
 inline fn instrument2Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
     const calling_convention = function_arguments.calling_convention;
     const arg_1 = function_arguments.arguments[0];
@@ -243,7 +358,7 @@ inline fn instrument2Arg(comptime f: anytype, comptime function_arguments: Funct
             };
             return Wrapper.wrapped;
         },
-        .type_is_first_anytype_last => {
+        .type_is_first_anytype_is_last => {
             const Wrapper = struct {
                 fn wrapped(comptime p1: type, p2: anytype) callconv(calling_convention) function_arguments.return_type {
                     const span = Span.open(id);
@@ -256,6 +371,7 @@ inline fn instrument2Arg(comptime f: anytype, comptime function_arguments: Funct
     }
 }
 
+/// Instruments a function with 3 arguments.
 inline fn instrument3Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
     const calling_convention = function_arguments.calling_convention;
     const arg_1 = function_arguments.arguments[0];
@@ -299,7 +415,7 @@ inline fn instrument3Arg(comptime f: anytype, comptime function_arguments: Funct
             };
             return Wrapper.wrapped;
         },
-        .type_is_first_anytype_last => {
+        .type_is_first_anytype_is_last => {
             const Wrapper = struct {
                 const arg_2_type = arg_2.arg_type.?;
                 fn wrapped(comptime p1: type, p2: arg_2_type, p3: anytype) callconv(calling_convention) function_arguments.return_type {

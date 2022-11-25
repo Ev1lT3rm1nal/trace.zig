@@ -1,10 +1,19 @@
+//! Namespace containing all types and  methods that define a `TracePoint`.
+
 const std = @import("std");
 
+/// An enumeration the enables the differentiation of different trace points.
 pub const TraceType = enum(u2) {
+    /// Used when a `Span` is opened.
     span_open = 0,
+    /// Used when a `Span` is closed.
     span_close = 1,
+    /// Used when an event is traced.
     event = 2,
+    /// Used when an error event is traced.
     error_event = 3,
+
+    /// Formats `TraceType` into a more human readable output.
     pub fn format(self: TraceType, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
@@ -19,10 +28,27 @@ pub const TraceType = enum(u2) {
     }
 };
 
+/// Defines a trace point, i.e. a point in time with a unique identifier
+/// and an a `TraceType`.
 pub const TracePoint = struct {
+    /// The unique identifier of the `TracePoint`.
     id: []const u8,
+    /// The timestamp of the `TracePoint`.
     timestamp: u64,
+    /// The `TraceType` of the `TracePoint`.
     trace_type: TraceType,
+
+    /// Formats the `TracePoint` to a string slice.
+    ///
+    /// This is used in the default writer implementation to log the trace point.
+    /// The format is:
+    ///
+    /// ```
+    /// tp;<timestamp>;<trace type as u8>;<identifier as string>
+    /// ```
+    ///
+    /// 1. `;` is used so that the log output can easily be further processed as CSV.
+    /// 2. `tp` is added to simplify filtering for "t"race "p"oints in the log output.
     pub fn format(self: TracePoint, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
