@@ -54,7 +54,6 @@ pub const enable_trace = true;
 ```
 
 The examples assumes that you have cloned this repository into the path `../third_party/` relative to a `src` folder.
-trace.zig can also be used as a package, the basic steps are described in the `README.md` of the repository.
 
 ### Span
 
@@ -90,7 +89,7 @@ info: ;tp;2215696614260;0;A unique identifier
 info: ;tp;2215696653476;1;A unique identifier
 ```
 
-## instrument
+### instrument
 
 Some functions can be instrumented and used as shown below:
 
@@ -126,7 +125,14 @@ info: ;tp;2215696614260;0;myAdd
 info: ;tp;2215696653476;1;myAdd
 ```
 
-### How to build
+### Examples
+
+In the `examples` folder one can find example executables (which are organized as individual Zig projects) that demonstrate the usage of trace.zig.
+
+1. `default_tracing_usage` demonstrates the usage of spans and instrument with the default writer and default clock
+2. `disabled_tracing` is a copy of a version of `default_tracing_usage` but tracing is disabled (i.e. no trace points are logged).
+
+## How to build
 
 * Build the library inside the root folder of the repository with:
 

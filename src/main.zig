@@ -188,9 +188,9 @@
 //!
 //! ### Overhead
 //!
-//! I believe that logging every span open and span close may result in a non-negible overhead.
-//! This must be further analysed (see [GitHub issue #1](https://gitlab.com/zig_tracing/trace.zig/-/issues/1)) and
-//! then the default writer is improved. In the meantime the writer can be overriden (i.e. implementing
+//! I believe that logging every span open and span close may result in a non-negligible overhead.
+//! This must be further analyzed (see [GitHub issue #1](https://gitlab.com/zig_tracing/trace.zig/-/issues/1)) and
+//! then the default writer is improved. In the meantime the writer can be overridden (i.e. implementing
 //! `writeTracePoint` in the `root` file).
 
 /// The Span namespace.
