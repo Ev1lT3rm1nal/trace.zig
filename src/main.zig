@@ -178,6 +178,22 @@
 //! If the writer and the clock behavior is overriden with implementations
 //! that don't use libc functionality, then it should be possible
 //! to use trace.zig in freestanding environments (e.g. embedded systems).
+//!
+//! ## Limitations
+//!
+//! ### Thread safety
+//!
+//! I believe that currently using an individual span inside a source code section
+//! which is called from more than on threads will lead to inconclusive spans. This
+//! means that one cannot identify from within which thread a span was opened and closed.
+//! There is already the [GitLab issue #5](https://gitlab.com/zig_tracing/trace.zig/-/issues/5) to address this limitation in the future.
+//!
+//! ### Overhead
+//!
+//! I believe that logging every span open and span close may result in a non-negible overhead.
+//! This must be further analysed (see [GitHub issue #1](https://gitlab.com/zig_tracing/trace.zig/-/issues/1)) and
+//! then the default writer is improved. In the meantime the writer can be overriden (i.e. implementing 
+//! `writeTracePoint` in the `root` file).
 
 /// The Span namespace.
 pub const Span = @import("span.zig");
