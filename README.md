@@ -126,6 +126,30 @@ info: ;tp;2215696614260;0;myAdd
 info: ;tp;2215696653476;1;myAdd
 ```
 
+### How to build
+
+* Build the library inside the root folder of the repository with:
+
+  ```shell
+  zig build
+  ```
+
+* Execute the tests inside the root folder of the repository with:
+
+  ```shell
+  zig build test
+  ```
+
+* Create the docs (currently created docs are not added to the resulting static web site)
+
+  ```shell
+  zig build docs
+  ```
+
+## Documentation
+
+The documentation is inside the source code, especially `src/main.zig`. I currently have some trouble to consistently generate the docs with content and the documentation is not generated through the CI/CD at the moment. Additionally namespace level comments (i.e. at the top of source code files that start with `//!`) are not part of the generated documentation but do contain a lot of information in `src/main.zig` and `src/span.zig`.
+
 ## License
 
 MIT, find the license file [here](./LICENSE).

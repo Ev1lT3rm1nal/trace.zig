@@ -1,3 +1,5 @@
+//! Namespace that contains the implementation of the default writer.
+
 const std = @import("std");
 const root = @import("root");
 const TracePoint = @import("trace_point.zig").TracePoint;
