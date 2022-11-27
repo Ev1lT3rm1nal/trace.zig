@@ -1,6 +1,6 @@
-# Announcing trace-zig 0.1.0
+# trace.zig: A small and simple tracing client library
 
-trace.zig is a small an simple tracing client library for Zig. It aims to fill the gap until the std library will have its own tracing. It hopefully can inspire this future implementation or help avoiding the mistakes trace.zig may have done ;).
+trace.zig aims to fill the gap until the std library will have its own tracing. It hopefully can inspire this future implementation or help avoiding the mistakes trace.zig may have done ;)
 
 ## Where to find it?
 
