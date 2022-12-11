@@ -164,6 +164,51 @@ pub inline fn instrument(comptime f: anytype, id: []const u8) @TypeOf(f) {
     return wrapped_function;
 }
 
+/// Creates the function arguments tuple for the given function.
+///
+/// Is used to create compile errors with context on `instrument`.
+/// In this way it should be easier to differentiate the compile errors emitted due to unsupported functions.
+/// Otherwise the errors of `std.meta.ArgsTuple` would be emitted which may make fixing the compile error harder.
+/// Additionally this should make the definition of `instrument` easier to read.
+/// This function makes the same checks as `std.Meta.ArgsTuple` hence it has pretty similar source code.
+inline fn functionArgumentsTuple(comptime Function: anytype) std.meta.ArgsTuple {
+    const info = @typeInfo(Function);
+    if (info != .Fn) {
+        @compileError("Only functions can be instrumented");
+    }
+
+    const function_info = info.Fn;
+    if (function_info.is_generic) {
+        @compileError("Instrumenting generic functions is not supported.");
+    }
+    if (function_info.is_var_args) {
+        @compileError("Instrumenting variadic function is not supported.");
+    }
+
+    return std.meta.ArgsTuple(Function);
+}
+
+pub inline fn instrument2(comptime Function: anytype, id: []const u8) fn (args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(f)).Fn.calling_convention) @typeInfo(@TypeOf(f)).Fn.return_type.? {
+    const Wrapper = struct {
+        fn wrapped(args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(Function)).Fn.calling_convention) @typeInfo(@TypeOf(Function)).Fn.return_type.? {
+            const span = Span.open(id);
+            defer span.close();
+            return @call(.{}, Function, args);
+        }
+    };
+
+    return Wrapper.wrapped;
+}
+
+fn mulFive(a: u64, b: u64, c: u64, d: u64, e: u64) u64 {
+    return a * b * c * d * e;
+}
+
+test "Instrument2" {
+    const instrMulFive = instrument2(mulFive, "MulFive");
+    try std.testing.expect(120 == instrMulFive(.{ 1, 2, 3, 4, 5 }));
+}
+
 /// Specifies the function argument patterns that are supported by instrument.
 const FunctionArgumentPattern = enum {
     /// All parameters are "vanilla", e.g. fn vanilla(a:u8,b:u16) void {}
