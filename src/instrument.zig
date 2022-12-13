@@ -164,6 +164,18 @@ pub inline fn instrument(comptime f: anytype, id: []const u8) @TypeOf(f) {
     return wrapped_function;
 }
 
+pub inline fn instrument2(comptime Function: anytype, id: []const u8) fn (args: functionArgumentsTuple(Function)) callconv(functionCallingConvention(Function)) functionReturnType(Function) {
+    const Wrapper = struct {
+        fn wrapped(args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(Function)).Fn.calling_convention) @typeInfo(@TypeOf(Function)).Fn.return_type.? {
+            const span = Span.open(id);
+            defer span.close();
+            return @call(.{}, Function, args);
+        }
+    };
+
+    return Wrapper.wrapped;
+}
+
 /// Creates the function arguments tuple for the given function.
 ///
 /// Is used to create compile errors with context on `instrument`.
@@ -171,8 +183,8 @@ pub inline fn instrument(comptime f: anytype, id: []const u8) @TypeOf(f) {
 /// Otherwise the errors of `std.meta.ArgsTuple` would be emitted which may make fixing the compile error harder.
 /// Additionally this should make the definition of `instrument` easier to read.
 /// This function makes the same checks as `std.Meta.ArgsTuple` hence it has pretty similar source code.
-inline fn functionArgumentsTuple(comptime Function: anytype) std.meta.ArgsTuple {
-    const info = @typeInfo(Function);
+inline fn functionArgumentsTuple(comptime Function: anytype) type {
+    const info = @typeInfo(@TypeOf(Function));
     if (info != .Fn) {
         @compileError("Only functions can be instrumented");
     }
@@ -185,19 +197,30 @@ inline fn functionArgumentsTuple(comptime Function: anytype) std.meta.ArgsTuple 
         @compileError("Instrumenting variadic function is not supported.");
     }
 
-    return std.meta.ArgsTuple(Function);
+    return std.meta.ArgsTuple(@TypeOf(Function));
 }
 
-pub inline fn instrument2(comptime Function: anytype, id: []const u8) fn (args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(f)).Fn.calling_convention) @typeInfo(@TypeOf(f)).Fn.return_type.? {
-    const Wrapper = struct {
-        fn wrapped(args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(Function)).Fn.calling_convention) @typeInfo(@TypeOf(Function)).Fn.return_type.? {
-            const span = Span.open(id);
-            defer span.close();
-            return @call(.{}, Function, args);
-        }
-    };
+/// Returns the calling convention of the given function.
+///
+/// This simplifies to read API for `instrument`.
+inline fn functionCallingConvention(comptime Function: anytype) std.builtin.CallingConvention {
+    const info = @typeInfo(@TypeOf(Function));
+    if (info != .Fn) {
+        @compileError("Only functions can be instrumented");
+    }
+    return info.Fn.calling_convention;
+}
 
-    return Wrapper.wrapped;
+/// Returns the return type of the given function.
+///
+/// This simplifies to read API for `instrument`.
+inline fn functionReturnType(comptime Function: anytype) type {
+    const info = @typeInfo(@TypeOf(Function));
+    if (info != .Fn) {
+        @compileError("Only functions can be instrumented");
+    }
+    const return_type = info.Fn.return_type orelse @compileError("Null return type is not supported");
+    return return_type;
 }
 
 fn mulFive(a: u64, b: u64, c: u64, d: u64, e: u64) u64 {
