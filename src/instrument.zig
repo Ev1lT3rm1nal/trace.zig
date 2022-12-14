@@ -176,6 +176,40 @@ pub inline fn instrument2(comptime Function: anytype, id: []const u8) fn (args: 
     return Wrapper.wrapped;
 }
 
+test "Instrument Struct method" {
+    const Point = struct {
+        x: u32,
+        y: u32,
+        const Self = @This();
+        fn innerDotProduct(self: Self, other: Self) u32 {
+            return self.x * other.x + self.y * other.y;
+        }
+        const dotProduct = instrument2(innerDotProduct, "Point.dotProduct");
+    };
+
+    const point_1 = Point{
+        .x = 5,
+        .y = 6,
+    };
+    const point_2 = Point{
+        .x = 6,
+        .y = 5,
+    };
+    const dot = Point.dotProduct(.{ point_1, point_2 });
+    try @import("std").testing.expect(60 == dot);
+}
+
+test "Test instrument with multiple parameter function" {
+    const TestNamespace = struct {
+        fn mulFive(a: u64, b: u64, c: u64, d: u64, e: u64) u64 {
+            return a * b * c * d * e;
+        }
+    };
+
+    const instrMulFive = instrument2(TestNamespace.mulFive, "MulFive");
+    try std.testing.expect(120 == instrMulFive(.{ 1, 2, 3, 4, 5 }));
+}
+
 /// Creates the function arguments tuple for the given function.
 ///
 /// Is used to create compile errors with context on `instrument`.
@@ -221,15 +255,6 @@ inline fn functionReturnType(comptime Function: anytype) type {
     }
     const return_type = info.Fn.return_type orelse @compileError("Null return type is not supported");
     return return_type;
-}
-
-fn mulFive(a: u64, b: u64, c: u64, d: u64, e: u64) u64 {
-    return a * b * c * d * e;
-}
-
-test "Instrument2" {
-    const instrMulFive = instrument2(mulFive, "MulFive");
-    try std.testing.expect(120 == instrMulFive(.{ 1, 2, 3, 4, 5 }));
 }
 
 /// Specifies the function argument patterns that are supported by instrument.
