@@ -201,7 +201,7 @@ test "Instrument Struct method" {
 
 test "Test instrument with multiple parameter function" {
     const TestNamespace = struct {
-        fn mulFive(a: u64, b: u64, c: u64, d: u64, e: u64) u64 {
+        inline fn mulFive(a: u64, b: u64, c: u64, d: u64, e: u64) u64 {
             return a * b * c * d * e;
         }
     };
