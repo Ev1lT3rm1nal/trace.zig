@@ -6,7 +6,7 @@ const Span = @import("span.zig");
 /// Instrument enables to instrument a function (if it is supported).
 ///
 /// An instrumented function is "wrapped" with a Span. This means upon
-/// calling this function a span is opened before the actual call closed
+/// calling this function a span is opened before the actual call and closed
 /// when the function returns.
 ///
 /// Emits a compile error if an unsupported function is instrumented.
@@ -32,7 +32,7 @@ const Span = @import("span.zig");
 ///
 /// fn anotherFunction() void {
 ///     // The instrumented function can be called as the original function.
-///     const value = instrumentedAdd(5,6);
+///     const value = instrumentedAdd(.{5, 6});
 ///     _ = value;
 /// }
 /// ```
@@ -43,8 +43,8 @@ const Span = @import("span.zig");
 /// const Point = struct {
 ///     x: u32,
 ///     y: u32,
-///     const Self = Point;
-///     fn innerDotProduct(self: Point, other: Point) u32 {
+///     const Self = @This();
+///     fn innerDotProduct(self: Self, other: Self) u32 {
 ///         return self.x * other.x + self.y * other.y;
 ///     }
 ///     // the instrumented method.
@@ -60,9 +60,8 @@ const Span = @import("span.zig");
 ///         .x = 6,
 ///         .y = 5,
 ///     };
-///     // The instrumented function can be called with the "." syntax as
-///     // usual.
-///     const dot = point_1.dotProduct(point_2);
+///     // Unfortunately the instrumented function cannot be called with the "." syntax as usual.
+///     const dot = dotProduct(.{point_1, point_2});
 ///     try @import("std").testing.expect(60 == dot);
 /// }
 /// ```
@@ -149,22 +148,14 @@ const Span = @import("span.zig");
 ///     _ = c;
 /// }
 /// ```
+/// ## Unsupported functions
 ///
-pub inline fn instrument(comptime f: anytype, id: []const u8) @TypeOf(f) {
-    const function_arguments = validateFunction(f);
-
-    const wrapped_function = switch (function_arguments.number_of_arguments) {
-        0 => instrument0Args(f, function_arguments, id),
-        1 => instrument1Arg(f, function_arguments, id),
-        2 => instrument2Arg(f, function_arguments, id),
-        3 => instrument3Arg(f, function_arguments, id),
-        else => @compileError("Only up to 3 function argument is supported"),
-    };
-
-    return wrapped_function;
-}
-
-pub inline fn instrument2(comptime Function: anytype, id: []const u8) fn (args: functionArgumentsTuple(Function)) callconv(functionCallingConvention(Function)) functionReturnType(Function) {
+/// The following categories of functions are not supported:
+///
+/// * Generic functions
+/// * Function with variadic arguments
+/// * Functions with variadic arguments
+pub inline fn instrument(comptime Function: anytype, id: []const u8) fn (args: functionArgumentsTuple(Function)) callconv(functionCallingConvention(Function)) functionReturnType(Function) {
     const Wrapper = struct {
         fn wrapped(args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(Function)).Fn.calling_convention) @typeInfo(@TypeOf(Function)).Fn.return_type.? {
             const span = Span.open(id);
@@ -184,7 +175,7 @@ test "Instrument Struct method" {
         fn innerDotProduct(self: Self, other: Self) u32 {
             return self.x * other.x + self.y * other.y;
         }
-        const dotProduct = instrument2(innerDotProduct, "Point.dotProduct");
+        const dotProduct = instrument(innerDotProduct, "Point.dotProduct");
     };
 
     const point_1 = Point{
@@ -199,15 +190,59 @@ test "Instrument Struct method" {
     try @import("std").testing.expect(60 == dot);
 }
 
-test "Test instrument with multiple parameter function" {
+test "Instrument with multiple parameter function" {
     const TestNamespace = struct {
         inline fn mulFive(a: u64, b: u64, c: u64, d: u64, e: u64) u64 {
             return a * b * c * d * e;
         }
     };
 
-    const instrMulFive = instrument2(TestNamespace.mulFive, "MulFive");
+    const instrMulFive = instrument(TestNamespace.mulFive, "MulFive");
     try std.testing.expect(120 == instrMulFive(.{ 1, 2, 3, 4, 5 }));
+}
+
+test "Instrument with 0 args and void return type" {
+    // Arrange
+    const TestStruct = struct {
+        var value: u8 = 0;
+        fn incrementValue() void {
+            value += 1;
+        }
+    };
+    const instrumentedIncrementValue = instrument(TestStruct.incrementValue, "incrementValue");
+
+    // Act
+    instrumentedIncrementValue(.{});
+
+    // Assert
+    try std.testing.expect(TestStruct.value == 1);
+}
+
+test "Instrument with 1 arg and u8 return type" {
+    // Arrange
+    const TestStruct = struct {
+        fn pow2Inner(value: u8) u8 {
+            return value * value;
+        }
+    };
+    const pow2 = instrument(TestStruct.pow2Inner, "pow2");
+
+    // Act
+    const result = pow2(.{5});
+
+    // Assert
+    try std.testing.expect(25 == result);
+}
+
+test "Instrument with 2 arguments" {
+    const TestNamespace = struct {
+        fn addInner(x: u8, y: u8) u8 {
+            return x + y;
+        }
+    };
+
+    const add = instrument(TestNamespace.addInner, "add");
+    try std.testing.expect(11 == add(.{ 5, 6 }));
 }
 
 /// Creates the function arguments tuple for the given function.
@@ -255,264 +290,4 @@ inline fn functionReturnType(comptime Function: anytype) type {
     }
     const return_type = info.Fn.return_type orelse @compileError("Null return type is not supported");
     return return_type;
-}
-
-/// Specifies the function argument patterns that are supported by instrument.
-const FunctionArgumentPattern = enum {
-    /// All parameters are "vanilla", e.g. fn vanilla(a:u8,b:u16) void {}
-    vanilla,
-    /// A type is the first argument, e.g. fn typeFirst(comptime T: type, a:u8) void {}
-    type_is_first_argument,
-    /// anytype is the last argument, e.g. fn format(fmt: [] const u8, args: anytype) void {}
-    anytype_is_last_argument,
-    /// A type is the first argument, the last argument is anytype the last, e.g. fn typeFirstAnytypeLast(comptime T: type, args: anytype) void {}
-    type_is_first_anytype_is_last,
-};
-
-/// Struct used to validate and analyze a function according their arguments.
-const FunctionArguments = struct {
-    calling_convention: std.builtin.CallingConvention,
-    arguments: []const std.builtin.Type.Fn.Param,
-    return_type: type,
-    argument_pattern: FunctionArgumentPattern,
-    number_of_arguments: usize,
-};
-
-/// Validates a function to check if it is supported and the function argument
-/// pattern the function realizes.
-fn validateFunction(comptime f: anytype) FunctionArguments {
-    const function_type_info = @typeInfo(@TypeOf(f)).Fn;
-    const args = function_type_info.args;
-    const number_of_arguments = args.len;
-    const calling_convention = function_type_info.calling_convention;
-    const return_type = function_type_info.return_type orelse {
-        @compileError("Null return type is not supported");
-    };
-
-    const pattern = analyseForFunctionArgumentsPattern(args, number_of_arguments);
-
-    const function_arguments = FunctionArguments{
-        .calling_convention = calling_convention,
-        .arguments = args,
-        .return_type = return_type,
-        .argument_pattern = pattern,
-        .number_of_arguments = number_of_arguments,
-    };
-    return function_arguments;
-}
-
-/// Analyse the function argument pattern of the given function.
-fn analyseForFunctionArgumentsPattern(comptime arguments: []const std.builtin.Type.Fn.Param, number_of_arguments: usize) FunctionArgumentPattern {
-    var number_of_type_arguments = 0;
-    var number_of_anytypes = 0;
-    for (arguments) |arg| {
-        if (arg.arg_type != null) {
-            if (arg.arg_type.? == type) {
-                number_of_type_arguments += 1;
-            }
-        }
-        if (arg.is_generic) {
-            number_of_anytypes += 1;
-        }
-    }
-
-    var first_argument_is_of_type_type: bool = false;
-    if (number_of_type_arguments > 1) {
-        @compileError("Only one function argument of type \"type\" is supported.");
-    } else if (number_of_type_arguments == 1) {
-        if (arguments[0].arg_type == null) {
-            @compileError("Only if the first argument is of type \"type\" is supported.");
-        }
-        if (arguments[0].arg_type.? == type) {
-            first_argument_is_of_type_type = true;
-        } else {
-            @compileError("Only if the first argument is of type \"type\" is supported.");
-        }
-    }
-
-    var last_argument_is_anytype: bool = false;
-    if (number_of_anytypes > 1) {
-        @compileError("Only one function argument of type \"anytype\" allowed.");
-    } else if (number_of_anytypes == 1) {
-        if (arguments[number_of_arguments - 1].is_generic) {
-            last_argument_is_anytype = true;
-        } else {
-            @compileError("It is only supported, that the last argument is of type \"anytype\".");
-        }
-    }
-
-    const pattern = if (first_argument_is_of_type_type and !last_argument_is_anytype)
-        .type_is_first_argument
-    else if (!first_argument_is_of_type_type and last_argument_is_anytype)
-        .anytype_is_last_argument
-    else if (first_argument_is_of_type_type and last_argument_is_anytype)
-        .type_is_first_anytype_is_last
-    else
-        .vanilla;
-
-    return pattern;
-}
-
-/// Instruments a function with no arguments.
-inline fn instrument0Args(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
-    const calling_convention = function_arguments.calling_convention;
-    const Wrapper = struct {
-        fn wrapped() callconv(calling_convention) function_arguments.return_type {
-            const span = Span.open(id);
-            defer span.close();
-            return f();
-        }
-    };
-    return Wrapper.wrapped;
-}
-
-/// Instruments a function with 1 argument.
-inline fn instrument1Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
-    const calling_convention = function_arguments.calling_convention;
-    const arg = function_arguments.arguments[0];
-    switch (function_arguments.argument_pattern) {
-        .vanilla => {
-            const arg_type = arg.arg_type.?;
-            const Wrapper = struct {
-                fn wrapped(p1: arg_type) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .type_is_first_argument => {
-            const Wrapper = struct {
-                fn wrapped(comptime p1: type) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .anytype_is_last_argument => {
-            const Wrapper = struct {
-                fn wrapped(p1: anytype) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        else => @compileError("It is not supported that the first argument is of type \"type\" and of type \"anytype\"."),
-    }
-}
-
-/// Instruments a function with 2 arguments.
-inline fn instrument2Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
-    const calling_convention = function_arguments.calling_convention;
-    const arg_1 = function_arguments.arguments[0];
-    const arg_2 = function_arguments.arguments[1];
-    switch (function_arguments.argument_pattern) {
-        .vanilla => {
-            const arg_1_type = arg_1.arg_type.?;
-            const arg_2_type = arg_2.arg_type.?;
-            const Wrapper = struct {
-                fn wrapped(p1: arg_1_type, p2: arg_2_type) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .type_is_first_argument => {
-            const Wrapper = struct {
-                const arg_2_type = arg_2.arg_type.?;
-                fn wrapped(comptime p1: type, p2: arg_2_type) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .anytype_is_last_argument => {
-            const arg_1_type = arg_1.arg_type.?;
-            const Wrapper = struct {
-                fn wrapped(p1: arg_1_type, p2: anytype) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .type_is_first_anytype_is_last => {
-            const Wrapper = struct {
-                fn wrapped(comptime p1: type, p2: anytype) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-    }
-}
-
-/// Instruments a function with 3 arguments.
-inline fn instrument3Arg(comptime f: anytype, comptime function_arguments: FunctionArguments, id: []const u8) @TypeOf(f) {
-    const calling_convention = function_arguments.calling_convention;
-    const arg_1 = function_arguments.arguments[0];
-    const arg_2 = function_arguments.arguments[1];
-    const arg_3 = function_arguments.arguments[2];
-    switch (function_arguments.argument_pattern) {
-        .vanilla => {
-            const arg_1_type = arg_1.arg_type.?;
-            const arg_2_type = arg_2.arg_type.?;
-            const arg_3_type = arg_2.arg_type.?;
-            const Wrapper = struct {
-                fn wrapped(p1: arg_1_type, p2: arg_2_type, p3: arg_3_type) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2, p3);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .type_is_first_argument => {
-            const Wrapper = struct {
-                const arg_2_type = arg_2.arg_type.?;
-                const arg_3_type = arg_3.arg_type.?;
-                fn wrapped(comptime p1: type, p2: arg_2_type, p3: arg_3_type) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2, p3);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .anytype_is_last_argument => {
-            const arg_1_type = arg_1.arg_type.?;
-            const arg_2_type = arg_2.arg_type.?;
-            const Wrapper = struct {
-                fn wrapped(p1: arg_1_type, p2: arg_2_type, p3: anytype) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2, p3);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-        .type_is_first_anytype_is_last => {
-            const Wrapper = struct {
-                const arg_2_type = arg_2.arg_type.?;
-                fn wrapped(comptime p1: type, p2: arg_2_type, p3: anytype) callconv(calling_convention) function_arguments.return_type {
-                    const span = Span.open(id);
-                    defer span.close();
-                    return f(p1, p2, p3);
-                }
-            };
-            return Wrapper.wrapped;
-        },
-    }
 }
