@@ -77,7 +77,7 @@
 //!
 //! ## instrument
 //!
-//! Some functions can be instrumented and used as shown below:
+//! Some categories of functions can be instrumented and used as shown below:
 //!
 //! ```
 //! const trace = @import("./third_party/trace.zig/src/main.zig");
@@ -92,8 +92,10 @@
 //! // but should be unique regarding the overall usage of identifiers.
 //!
 //! fn anotherFunction() void {
-//!     // The instrumented function can be called as the original function.
-//!     const value = instrumentedAdd(5,6);
+//!     // The instrumented function is called slightly different than the original function.
+//!     // instrument maps the given function to a new function with its arguments turned
+//!     // into an argument tuple.
+//!     const value = instrumentedAdd(.{5, 6});
 //!     _ = value;
 //! }
 //! ```

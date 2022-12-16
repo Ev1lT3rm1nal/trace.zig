@@ -89,9 +89,9 @@ info: ;tp;2215696614260;0;A unique identifier
 info: ;tp;2215696653476;1;A unique identifier
 ```
 
-### instrument
+## instrument
 
-Some functions can be instrumented and used as shown below:
+Some categories of functions can be instrumented and used as shown below:
 
 ```Zig
 const trace = @import("./third_party/trace.zig/src/main.zig");
@@ -106,8 +106,10 @@ const instrumentedAdd = instrumentAdd(myAdd, "myAdd");
 // but should be unique regarding the overall usage of identifiers.
 
 fn anotherFunction() void {
-    // The instrumented function can be called as the original function.
-    const value = instrumentedAdd(5,6);
+    // The instrumented function is called slightly different than the original function.
+    // instrument maps the given function to a new function with its arguments turned
+    // into an argument tuple.
+    const value = instrumentedAdd(.{5, 6});
     _ = value;
 }
 ```
@@ -154,7 +156,7 @@ In the `examples` folder one can find example executables (which are organized a
 
 ## Documentation
 
-The documentation is inside the source code, especially `src/main.zig`. I currently have some trouble to consistently generate the docs with content and the documentation is not generated through the CI/CD at the moment. Additionally namespace level comments (i.e. at the top of source code files that start with `//!`) are not part of the generated documentation but do contain a lot of information in `src/main.zig` and `src/span.zig`.
+The documentation is inside the source code, especially `src/main.zig`. I currently have some trouble to consistently generate the docs with content and the documentation is not generated through the CI/CD at the moment. Additionally namespace level comments (i.e. at the top of source code files that start with ``) are not part of the generated documentation but do contain a lot of information in `src/main.zig` and `src/span.zig`.
 
 ## License
 

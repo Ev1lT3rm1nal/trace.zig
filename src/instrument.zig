@@ -7,7 +7,14 @@ const Span = @import("span.zig");
 ///
 /// An instrumented function is "wrapped" with a Span. This means upon
 /// calling this function a span is opened before the actual call and closed
-/// when the function returns.
+/// when the function returns. `instrument` itselfs maps the given function into
+/// a new function. During this mapping the given functions arguments are mapped
+/// into a `std.meta.ArgsTuple`. See an abstract example of this mapping below:
+///
+/// instrument: fn (Arg1Type, Arg2Type, ..., ArgNType) ReturnType => fn (.{Arg1Type, Arg2Type, ..., ArgNType}) ReturnType
+///
+/// This means that an instrumented function is called slightly different than the given
+/// function. See examples below.
 ///
 /// Emits a compile error if an unsupported function is instrumented.
 ///
@@ -68,59 +75,22 @@ const Span = @import("span.zig");
 ///
 /// ## Supported functions
 ///
-/// The following rules define which type of function (or more specific function arguments)
-/// are supported:
+/// Functions with an arbitrary number of arguments are supported. However these arguments must not be
+/// generic, or `anytype`, etc.. See below for more information on unsupported functions.
 ///
-/// 1. From zero up to three arguments supported.
-/// 2. Arguments can be vanilla arguments, i.e. without specific identifiers like `comptime` (e.g. `u8`).
-/// 3. The first argument can be of type `type`, i.e. it requires the `comptime` qualifier.
-/// 4. The last argument can be of type `anytype`.
+/// ## Unsupported functions
+///
+/// The following categories of functions are not supported:
+///
+/// 1. Generic functions
+/// 2. Function with variadic arguments
+/// 3. Functions with variadic arguments
+/// 4. Function with C calling convention are not supported
 /// 5. The return type is not null. This should be solvable in the future
 ///    if I understand this comment correctly:
 ///    [`std.builtin`](https://github.com/ziglang/zig/blob/5b9d0a446af4e74c9f915a34b39de83d9b2335f9/lib/std/builtin.zig#L371-L372).
-/// 6. A combination of the above.
 ///
-/// ### Examples
-///
-/// 1. A function with three "vanilla" arguments is supported:
-///
-/// ```
-/// fn func(a:u8,b:i16,c:u128) void {
-///     _ = a;
-///     _ = b;
-///     _ = c;
-/// }
-/// ```
-///
-/// 2. A function with a `type` as first argument, a "vanilla" as second and an `anytype` as last
-///
-/// ```
-/// fn func2(comptime T:type, b:u8, c: anytype) void {
-///     _ = T;
-///     _ = b;
-///     _ = c;
-/// }
-/// ```
-///
-/// ### Explanations
-///
-/// These limitations occur from the fact, that:
-///
-/// 1. I've not found a generic way to iterate over the number of arguments.
-///    This means I switch case over the number of arguments.
-/// 2. I cannot extract the information if a parameter requires `comptime` from
-///    `std.builtin.Type` other than the inherent knowledge that arguments of type
-///    `type`require `comptime`
-/// 3. Although if an argument is generic can be extracted (via
-///    `std.builtin.Type.Fn.Param`) I am not sure if a generic type
-///    can be replaced with `anytype` or how to extract the type of a generic type.
-///    Using anytype as the last argument seemed like a reasonable pattern to support.
-///    Also if I support multiple generics I need to define more patterns due to reason 1.
-/// 4. Patterns seemed like a reasonable solution that would simplify the implementation (I can
-///    switch over the analyzed pattern as opposed to an if-else hell).
-/// 5. I have no idea how to define a return type that is null.
-///
-/// ## Some examples of unsupported functions
+/// ### Some examples of unsupported functions
 ///
 /// 1. Return type is null
 ///
@@ -148,13 +118,19 @@ const Span = @import("span.zig");
 ///     _ = c;
 /// }
 /// ```
-/// ## Unsupported functions
 ///
-/// The following categories of functions are not supported:
+/// ## Explanations
 ///
-/// * Generic functions
-/// * Function with variadic arguments
-/// * Functions with variadic arguments
+/// These limitations occur from the facts, that:
+///
+/// 1. `std.meta.ArgsTuple` does not support generic functions or function with variadic arguments
+/// 2. I cannot extract the information if a parameter requires `comptime` from
+///    `std.builtin.Type` other than the inherent knowledge that arguments of type
+///    `type`require `comptime`
+/// 3. Although if an argument is generic can be extracted (via
+///    `std.builtin.Type.Fn.Param`) I am not sure if a generic type
+///    can be replaced with `anytype` or how to extract the type of a generic type.
+/// 5. I have no idea how to define a return type that is null.
 pub inline fn instrument(comptime Function: anytype, id: []const u8) fn (args: functionArgumentsTuple(Function)) callconv(functionCallingConvention(Function)) functionReturnType(Function) {
     const Wrapper = struct {
         fn wrapped(args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(Function)).Fn.calling_convention) @typeInfo(@TypeOf(Function)).Fn.return_type.? {
