@@ -221,6 +221,17 @@ test "Instrument with 2 arguments" {
     try std.testing.expect(11 == add(.{ 5, 6 }));
 }
 
+test "C calling convention" {
+    const TestNamespace = struct {
+        fn cFunc(x: u8, y: u8) callconv(.C) u8 {
+            return x * y;
+        }
+    };
+    _ = TestNamespace;
+    //const instrCFunct = instrument(TestNamespace.cFunc, "cFunc");
+    //try std.testing.expectEqual(30, instrCFunct(.{ 5, 6 }));
+}
+
 /// Creates the function arguments tuple for the given function.
 ///
 /// Is used to create compile errors with context on `instrument`.
