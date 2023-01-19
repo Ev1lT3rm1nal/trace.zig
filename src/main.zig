@@ -71,8 +71,8 @@
 //! then something like the below output will be logged with `std.log`:
 //!
 //! ```shell
-//! info: ;tp;2215696614260;0;A unique identifier
-//! info: ;tp;2215696653476;1;A unique identifier
+//! info: ;tp;2215696614260;0;A unique identifier;9887
+//! info: ;tp;2215696653476;1;A unique identifier;9887
 //! ```
 //!
 //! ## instrument
@@ -109,8 +109,8 @@
 //! then something like the below output will be logged with `std.log`:
 //!
 //! ```shell
-//! info: ;tp;2215696614260;0;myAdd
-//! info: ;tp;2215696653476;1;myAdd
+//! info: ;tp;2215696614260;0;myAdd;6588
+//! info: ;tp;2215696653476;1;myAdd;6588
 //! ```
 //!
 //! ## On unique identifiers
@@ -126,10 +126,10 @@
 //! Consider the following log output, created by two spans with the identifier "my span".
 //!
 //! ```shell
-//! info: ;tp;2215696614260;0;my span
-//! info: ;tp;2215707778213;0;my span
-//! info: ;tp;2215770379010;1;my span
-//! info: ;tp;2215770407553;1;my span
+//! info: ;tp;2215696614260;0;my span;7853
+//! info: ;tp;2215707778213;0;my span;7853
+//! info: ;tp;2215770379010;1;my span;7583
+//! info: ;tp;2215770407553;1;my span;7583
 //! ```
 //!
 //! It is impossible to reconstruct from this output which span closes first: the one
@@ -173,6 +173,28 @@
 //! 1. The timestamp is monotonic (which is currently not the case in the default implementation)
 //! 2. The resolution of the timestamp is known (which simplifies the comparison to other traces or events etc.)
 //!
+//! ## Context
+//!
+//! When tracing is enabled (i.e. `enable_trace = true`) then trace.zig will
+//! will require a context id (There is a default implementation which uses
+//! `std.Thread.getCurrentId` to get the current context id). This context id
+//! is necessary for multi-threading environments where a span is opened or
+//! closed in multiple threads concurrently. In these cases it would otherwise
+//! hard to know which trace point was created in which thread "context".
+//! However as usual, this function can be overridden, which may be useful
+//! for single threaded applications or freestanding target. If this is
+//! necessary a function with the following name and signature need to be
+//! implemented in the `root` file:
+//!
+//! ```
+//! pub inline fn getTraceContext() u64 {
+//!     var id = 0;
+//!     // custom implementation here
+//!     return id;
+//! }
+//! // inline is not strictly necessary.
+//! ```
+//!
 //! ## Freestanding
 //!
 //! If the writer and the clock behavior is overriden with implementations
@@ -181,19 +203,23 @@
 //!
 //! ## Limitations
 //!
-//! ### Thread safety
-//!
-//! I believe that currently using an individual span inside a source code section
-//! which is called from more than on threads will lead to inconclusive spans. This
-//! means that one cannot identify from within which thread a span was opened and closed.
-//! There is already the [GitLab issue #5](https://gitlab.com/zig_tracing/trace.zig/-/issues/5) to address this limitation in the future.
-//!
 //! ### Overhead
 //!
 //! I believe that logging every span open and span close may result in a non-negligible overhead.
-//! This must be further analyzed (see [GitHub issue #1](https://gitlab.com/zig_tracing/trace.zig/-/issues/1)) and
+//! This must be further analyzed (see [GitLab issue #1](https://gitlab.com/zig_tracing/trace.zig/-/issues/1)) and
 //! then the default writer is improved. In the meantime the writer can be overridden (i.e. implementing
 //! `writeTracePoint` in the `root` file).
+//!
+//! ### Async
+//!
+//! Although context and context ids solve the multi-threading problem, I
+//! believe that the context cannot be relied on in an async environment.
+//! My line of thinking is, that an async function, when can be executed
+//! by multiple threads until it is completed. This means each trace point
+//! created during the execution could be with a different context id, which
+//! makes it close to impossible to analyze. A solution for async needs to be
+//! found, see
+//! [GitLab issue #18](https://gitlab.com/zig_tracing/trace.zig/-/issues/18).
 
 /// The Span namespace.
 pub const Span = @import("span.zig");

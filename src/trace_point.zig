@@ -37,6 +37,8 @@ pub const TracePoint = struct {
     timestamp: u64,
     /// The `TraceType` of the `TracePoint`.
     trace_type: TraceType,
+    /// The context identifier of the `TracePoint`.
+    context_id: u64,
 
     /// Formats the `TracePoint` to a string slice.
     ///
@@ -44,7 +46,7 @@ pub const TracePoint = struct {
     /// The format is:
     ///
     /// ```
-    /// tp;<timestamp>;<trace type as u8>;<identifier as string>
+    /// tp;<timestamp>;<trace type as u8>;<identifier as string>;<context_id as u64>
     /// ```
     ///
     /// 1. `;` is used so that the log output can easily be further processed as CSV.
@@ -52,7 +54,7 @@ pub const TracePoint = struct {
     pub fn format(self: TracePoint, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        try writer.print("tp;{d};{};{s}", .{ self.timestamp, @enumToInt(self.trace_type), self.id });
+        try writer.print("tp;{d};{};{s};{d}", .{ self.timestamp, @enumToInt(self.trace_type), self.id, self.context_id });
         try writer.writeAll("");
     }
 };
@@ -67,6 +69,7 @@ test "TracePoint.format" {
         .id = "Test Id",
         .trace_type = TraceType.span_close,
         .timestamp = 123,
+        .context_id = 456,
     };
 
     // Act
@@ -77,7 +80,7 @@ test "TracePoint.format" {
     try expect(eql(
         u8,
         trace_point_string,
-        "tp;123;1;Test Id",
+        "tp;123;1;Test Id;456",
     ));
 }
 
