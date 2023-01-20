@@ -210,7 +210,7 @@
 //! then the default writer is improved. In the meantime the writer can be overridden (i.e. implementing
 //! `writeTracePoint` in the `root` file).
 //!
-//! ### Async
+//! ### Async functions
 //!
 //! Although context and context ids solve the multi-threading problem, I
 //! believe that the context cannot be relied on in an async environment.
