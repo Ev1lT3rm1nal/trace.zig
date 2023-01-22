@@ -1,5 +1,10 @@
 # Changelog for trace.zig
 
+## 0.3.0
+
+* Fixed issue:
+  * [Consider multi-threading for default writer](https://gitlab.com/zig_tracing/trace.zig/-/issues/5)
+
 ## 0.2.0
 
 * Changed instrument function to only support non generic and non-variadic functions
