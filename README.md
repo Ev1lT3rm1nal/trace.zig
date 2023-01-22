@@ -85,8 +85,8 @@ When:
 then something like the below output will be logged with `std.log`:
 
 ```shell
-info: ;tp;2215696614260;0;A unique identifier
-info: ;tp;2215696653476;1;A unique identifier
+info: ;tp;2215696614260;0;A unique identifier;355
+info: ;tp;2215696653476;1;A unique identifier;355
 ```
 
 ## instrument
@@ -123,8 +123,8 @@ When:
 then something like the below output will be logged with `std.log`:
 
 ```shell
-info: ;tp;2215696614260;0;myAdd
-info: ;tp;2215696653476;1;myAdd
+info: ;tp;2215696614260;0;myAdd;6677
+info: ;tp;2215696653476;1;myAdd;6677
 ```
 
 ### Examples

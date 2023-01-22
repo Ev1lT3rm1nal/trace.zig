@@ -29,6 +29,7 @@ test "write" {
         .id = "write Default Test",
         .timestamp = 1223,
         .trace_type = TraceType.span_open,
+        .context_id = 788918,
     };
     // Act
     write(trace_point);
@@ -42,6 +43,7 @@ test "writeDefault" {
         .id = "write Default Test",
         .timestamp = 1223,
         .trace_type = TraceType.span_open,
+        .context_id = 5667,
     };
     // Act
     writeDefault(trace_point);

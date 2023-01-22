@@ -41,6 +41,7 @@ const TracePoint = tracepoint.TracePoint;
 const TraceType = tracepoint.TraceType;
 const writer = @import("writer.zig");
 const clock = @import("clock.zig");
+const context = @import("context.zig");
 
 /// Is checked during compile time. When false then Span's function are realized as no-ops.
 const enable = if (@hasDecl(root, "enable_trace")) root.enable_trace else if (builtin.is_test)
@@ -65,6 +66,7 @@ pub inline fn open(comptime id: []const u8) Span {
             .id = id,
             .timestamp = clock.timestamp(),
             .trace_type = TraceType.span_open,
+            .context_id = context.getContextId(),
         };
         writer.write(trace_point);
         return Span{ .id = id };
@@ -83,6 +85,7 @@ const PrivateSpan = struct {
             .id = self.id,
             .timestamp = clock.timestamp(),
             .trace_type = TraceType.span_close,
+            .context_id = context.getContextId(),
         };
         writer.write(trace_point);
     }
