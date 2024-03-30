@@ -6,8 +6,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = b.addStaticLibrary(.{
-        .name = "tracy.zig",
+    const mod = b.addModule("tracy", .{
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
@@ -20,7 +19,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&main_tests.step);
 
-    b.installArtifact(lib);
+    main_tests.root_module.addImport("tracy", mod);
+    test_step.dependOn(&main_tests.step);
 }
