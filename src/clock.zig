@@ -29,14 +29,14 @@ inline fn defaultTimestamp() u64 {
 
 /// Converts a timestamp into `u64` value.
 ///
-/// This is necessary since `Instant.now` returns a `os.timespec`,
+/// This is necessary since `Instant.now` returns a `std.posix.timespec`,
 /// instead of a u64.
 ///
 /// If the returned value is negative w.r.t. to the epoch, then 0 is returned
 /// and an error is logged. (This is lowered to `std.debug.log` so that
 /// test return in a success without further information on occured errors).
 inline fn convertTimestamp(comptime T: type, time_stamp: T) u64 {
-    if (T == os.timespec) {
+    if (T == std.posix.timespec) {
         // Hint:
         //   Inspired by https://github.com/ziglang/zig/blob/8a5818535b83ba87849cb09de9f1ccd32e8bb480/lib/std/time.zig
         //   Line 113
@@ -58,7 +58,7 @@ inline fn convertTimestamp(comptime T: type, time_stamp: T) u64 {
             }
             return 0;
         }
-        return (@intCast(u64, tv_sec) * 1_000_000_000) + @intCast(u64, tv_nsec);
+        return (@as(u64, @intCast(tv_sec)) * 1_000_000_000) + @as(u64, @intCast(tv_nsec));
     } else if (@TypeOf(time_stamp) == u64) {
         return time_stamp;
     } else {
@@ -75,41 +75,41 @@ test "convertTimestamp for u64" {
     try std.testing.expect(ts == 17);
 }
 
-test "convertTimestamp for postive os.timespec" {
+test "convertTimestamp for postive std.posix.timespec" {
     // Arrange
     const expect = std.testing.expect;
-    const os_ts = os.timespec{
+    const os_ts = std.posix.timespec{
         .tv_sec = 17,
         .tv_nsec = 333,
     };
     // Act
-    const ts = convertTimestamp(os.timespec, os_ts);
+    const ts = convertTimestamp(std.posix.timespec, os_ts);
     // Assert
     try expect(ts == 17_000_000_333);
 }
 
-test "convertTimestamp for negaive tv_sec os.timespec" {
+test "convertTimestamp for negaive tv_sec std.posix.timespec" {
     // Arrange
     const expect = std.testing.expect;
-    const os_ts = os.timespec{
+    const os_ts = std.posix.timespec{
         .tv_sec = -17,
         .tv_nsec = 333,
     };
     // Act
-    const ts = convertTimestamp(os.timespec, os_ts);
+    const ts = convertTimestamp(std.posix.timespec, os_ts);
     // Assert
     try expect(ts == 0);
 }
 
-test "convertTimestamp for negative tv_nsec os.timespec" {
+test "convertTimestamp for negative tv_nsec std.posix.timespec" {
     // Arrange
     const expect = std.testing.expect;
-    const os_ts = os.timespec{
+    const os_ts = std.posix.timespec{
         .tv_sec = 17,
         .tv_nsec = -333,
     };
     // Act
-    const ts = convertTimestamp(os.timespec, os_ts);
+    const ts = convertTimestamp(std.posix.timespec, os_ts);
     // Assert
     try expect(ts == 0);
 }

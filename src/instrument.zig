@@ -136,7 +136,7 @@ pub inline fn instrument(comptime Function: anytype, id: []const u8) fn (args: f
         fn wrapped(args: functionArgumentsTuple(Function)) callconv(@typeInfo(@TypeOf(Function)).Fn.calling_convention) @typeInfo(@TypeOf(Function)).Fn.return_type.? {
             const span = Span.open(id);
             defer span.close();
-            return @call(.{}, Function, args);
+            return @call(.auto, Function, args);
         }
     };
 

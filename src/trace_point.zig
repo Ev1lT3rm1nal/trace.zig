@@ -54,7 +54,7 @@ pub const TracePoint = struct {
     pub fn format(self: TracePoint, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        try writer.print("tp;{d};{};{s};{d}", .{ self.timestamp, @enumToInt(self.trace_type), self.id, self.context_id });
+        try writer.print("tp;{d};{};{s};{d}", .{ self.timestamp, @intFromEnum(self.trace_type), self.id, self.context_id });
         try writer.writeAll("");
     }
 };
